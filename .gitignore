@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+.pytest_cache/
+
+# Local configuration. Copy config/.env.example to config/.env.
+.env
+config/.env
+
+# Model weights stay on the machine that has them.
+# The installer writes a Hugging Face cache tree under weights/.
+weights/*
+!weights/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
