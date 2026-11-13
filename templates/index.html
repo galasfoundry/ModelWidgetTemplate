@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model widget</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Local model widget</p>
+      <h1 id="title">Model widget</h1>
+      <p id="meta" class="meta">Loading configuration…</p>
+    </header>
+
+    <form id="predict-form">
+      <div id="image-fields">
+        <label for="image">Image</label>
+        <input id="image" name="image" type="file" accept="image/*">
+        <img id="preview" alt="Selected upload" hidden>
+      </div>
+      <div id="text-fields" hidden>
+        <label for="text">Text</label>
+        <textarea id="text" name="text" rows="5"></textarea>
+      </div>
+      <button type="submit" id="submit">Run</button>
+      <p id="status" role="status"></p>
+    </form>
+
+    <section id="results" aria-live="polite">
+      <p class="empty">Results will show up here.</p>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
