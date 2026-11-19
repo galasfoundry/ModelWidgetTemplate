@@ -31,7 +31,19 @@
     <section id="results" aria-live="polite">
       <p class="empty">Results will show up here.</p>
     </section>
+
+    <section id="model-picker" aria-labelledby="picker-title">
+      <h2 id="picker-title">Models</h2>
+      <p id="picker-caps" class="meta">Checking this machine…</p>
+      <ul id="picker-list" class="picker-list"></ul>
+      <details id="picker-excluded-wrap" hidden>
+        <summary>Not available on this machine</summary>
+        <ul id="picker-excluded" class="picker-list"></ul>
+      </details>
+      <p id="picker-status" role="status"></p>
+    </section>
   </main>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/models.js') }}"></script>
 </body>
 </html>

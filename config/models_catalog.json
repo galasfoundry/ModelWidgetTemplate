@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "description": "Curated offline catalog for The First Book. All models are public, small, and suitable for low-resource machines.",
+  "models": [
+    {
+      "id": "mobilenetv3-small",
+      "name": "MobileNetV3-Small",
+      "hf_id": "timm/mobilenetv3_small_100.lamb_in1k",
+      "revision": "76b303ec28c466e9df37f4745dfb7aef20ab87ae",
+      "task": "image-classification",
+      "backend": "timm",
+      "approx_size_mb": 10,
+      "min_ram_gb": 2,
+      "description": "Default light image classifier. Good for general object / plant / tool identification.",
+      "theme_tags": ["vision", "identification", "default"]
+    },
+    {
+      "id": "tinystories-1m",
+      "name": "TinyStories-1M",
+      "hf_id": "roneneldan/TinyStories-1M",
+      "revision": "77f1b168e219585646439073245fe87e56b3023e",
+      "task": "text-generation",
+      "backend": "transformers",
+      "approx_size_mb": 5,
+      "min_ram_gb": 2,
+      "description": "Tiny language model. Useful for simple local guidance, checklists, or story-style notes.",
+      "theme_tags": ["text", "guidance", "lightweight"]
+    },
+    {
+      "id": "bedrock-sentiment-tiny",
+      "name": "Bedrock Sentiment Tiny",
+      "hf_id": "Facececersek/bedrock-sentiment-tiny",
+      "revision": "16175109a6e476cee0c388d2aac37429ecf964dd",
+      "task": "text-classification",
+      "backend": "transformers",
+      "approx_size_mb": 17,
+      "min_ram_gb": 2,
+      "description": "Tiny sentiment classifier.",
+      "theme_tags": ["text", "classification", "lightweight"]
+    },
+    {
+      "id": "mobilenetv2",
+      "name": "MobileNetV2",
+      "hf_id": "google/mobilenet_v2_1.0_224",
+      "revision": "75e607b00aeae1297cc89d026a118bce012f5c5a",
+      "task": "image-classification",
+      "backend": "transformers",
+      "approx_size_mb": 14,
+      "min_ram_gb": 2,
+      "description": "Alternative light vision model via transformers.",
+      "theme_tags": ["vision", "identification"]
+    }
+  ]
+}
