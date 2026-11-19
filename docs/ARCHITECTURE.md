@@ -5,9 +5,11 @@ a practical "tech-hacky" video library (repair, electronics, power, radio,
 tools, 3D printing…), short guides, and small local AI models. It grows out
 of this model widget template and is built for a 4 GB RAM laptop.
 
-The guiding rule: **after setup, nothing touches the network.** The single
-exception is the explicit model download when you pick a model that is not
-on disk yet (`POST /api/models/select`). Map packs and videos are copied in
+The guiding rule: **after setup, nothing touches the network.** The only
+exceptions are an explicit model download (`POST /api/models/select` or
+`POST /api/models/<id>/download`) and an explicit Hugging Face search from
+Discover (`GET /api/models/discover`). Search results are cached on disk so
+a previous search still shows offline. Map packs and videos are copied in
 by hand.
 
 ## Code layout
@@ -22,12 +24,15 @@ firstbook/guides.py         Markdown/text guides, keyword search
 firstbook/chat.py           First Book chat prompt, history trim and status messages
 firstbook/web.py            routes for /home, /maps, /videos, /guides, /chat and /api/status
 modelwidget/catalog.py      model catalog (category, status), filtering, install-if-missing
+modelwidget/discover.py     Hugging Face GGUF search, fit labels, user catalog, disk cache
 modelwidget/capabilities.py RAM, disk, CUDA, backends (incl. optional llama_cpp)
 modelwidget/downloads.py    background download jobs, progress, single-file GGUF fetch
 modelwidget/gguf.py         llama.cpp wrapper for GGUF models (optional llama-cpp-python)
 modelwidget/adapters/llama_cpp.py  text-generation adapter for GGUF
 scripts/download_models.py  CLI: list and download catalog models into weights/
-config/models_catalog.json  model catalog
+scripts/discover_models.py  CLI: search Hugging Face for GGUF models that fit this machine
+config/models_catalog.json  curated model catalog
+config/models_user.json     user-added discovery picks (gitignored)
 config/maps_catalog.json    known UK map packs, sources and licences
 scripts/build_video_manifest.py  scan a folder into videos.json (ffprobe optional)
 scripts/fetch_demo_map.py   setup-time UK map extracts from the Protomaps build
@@ -71,7 +76,9 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /chat`, `GET /api/chat/status` | Offline GGUF chat page and readiness |
 | `POST /api/chat` | Stream a chat reply (SSE). Body: `{ "messages": [...] }` |
 | `POST /api/chat/stop` | Stop the current chat reply |
-| `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately) |
+| `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately; user picks have `source: user`) |
+| `GET /api/models/discover?q=&task=chat` | Search Hugging Face for GGUF chat models that fit this machine; cached for offline use |
+| `POST /api/models/discover/add`, `POST /api/models/discover/remove` | Write or drop a pick in `config/models_user.json` (never the curated catalog) |
 | `POST /api/models/<id>/download`, `GET /api/models/<id>/status`, `GET /api/models/downloads` | Background downloads into `weights/` with progress |
 
 ## Maps

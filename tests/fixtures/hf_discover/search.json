@@ -1,0 +1,58 @@
+[
+  {
+    "id": "bartowski/Qwen2.5-1.5B-Instruct-GGUF",
+    "downloads": 53555,
+    "likes": 25,
+    "pipeline_tag": "text-generation",
+    "gated": false,
+    "tags": ["gguf", "chat", "text-generation", "license:apache-2.0", "conversational"]
+  },
+  {
+    "id": "unsloth/Llama-3.2-1B-Instruct-GGUF",
+    "downloads": 58894,
+    "likes": 86,
+    "pipeline_tag": "text-generation",
+    "gated": false,
+    "tags": ["gguf", "transformers", "text-generation", "license:llama3.2", "conversational"]
+  },
+  {
+    "id": "someone/all-minilm-L6-v2-GGUF",
+    "downloads": 90000,
+    "likes": 10,
+    "pipeline_tag": "sentence-similarity",
+    "gated": false,
+    "tags": ["gguf", "sentence-similarity", "embeddings"]
+  },
+  {
+    "id": "someone/Secret-Chat-7B-GGUF",
+    "downloads": 12000,
+    "likes": 4,
+    "pipeline_tag": "text-generation",
+    "gated": "auto",
+    "tags": ["gguf", "chat", "text-generation", "conversational"]
+  },
+  {
+    "id": "someone/CustomCode-1B-Instruct-GGUF",
+    "downloads": 8000,
+    "likes": 3,
+    "pipeline_tag": "text-generation",
+    "gated": false,
+    "tags": ["gguf", "chat", "text-generation", "trust_remote_code"]
+  },
+  {
+    "id": "someone/Huge-70B-Instruct-GGUF",
+    "downloads": 200000,
+    "likes": 500,
+    "pipeline_tag": "text-generation",
+    "gated": false,
+    "tags": ["gguf", "chat", "text-generation", "conversational"]
+  },
+  {
+    "id": "someone/Qwen2.5-3B-Instruct-GGUF",
+    "downloads": 15000,
+    "likes": 9,
+    "pipeline_tag": "text-generation",
+    "gated": false,
+    "tags": ["gguf", "chat", "text-generation", "conversational", "license:apache-2.0"]
+  }
+]

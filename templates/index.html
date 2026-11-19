@@ -43,6 +43,18 @@
       </details>
       <p id="picker-status" role="status"></p>
     </section>
+
+    <section id="model-discover" aria-labelledby="discover-title">
+      <h2 id="discover-title">Discover</h2>
+      <p class="meta">Search Hugging Face for GGUF chat models this machine can run. Results are cached, so a previous search still shows when you are offline.</p>
+      <form id="discover-form">
+        <label for="discover-q">Search</label>
+        <input id="discover-q" name="q" type="search" placeholder="e.g. llama 3.2 1b instruct" autocomplete="off">
+        <button type="submit" id="discover-submit">Search</button>
+      </form>
+      <p id="discover-status" role="status"></p>
+      <ul id="discover-list" class="picker-list"></ul>
+    </section>
   </main>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   <script src="{{ url_for('static', filename='js/models.js') }}"></script>

@@ -103,10 +103,22 @@ def load_catalog(path: Path | None = None) -> dict:
             continue
         seen.add(entry["id"])
         (planned if status == "planned" else models).append(entry)
+    # User-added picks live beside the curated catalog (models_user.json) and
+    # are never written back into this file.
+    user_file = path.with_name("models_user.json")
+    from modelwidget.discover import load_user_models
+
+    for entry in load_user_models(user_file):
+        if entry["id"] in seen:
+            invalid.append({"id": entry["id"], "error": "user id collides with the curated catalog"})
+            continue
+        seen.add(entry["id"])
+        (planned if entry.get("status") == "planned" else models).append(entry)
     return {
         "version": data.get("version"),
         "description": data.get("description", ""),
         "path": str(path),
+        "user_path": str(user_file),
         "models": models,
         "planned": planned,
         "invalid": invalid,

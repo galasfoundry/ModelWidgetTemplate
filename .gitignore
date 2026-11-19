@@ -31,3 +31,7 @@ library/videos/*
 # Setup tools downloaded by scripts/fetch_demo_map.py (pmtiles CLI).
 tools/
 library/maps/*.part
+
+# User-added models and cached Hugging Face discovery results.
+config/models_user.json
+config/models_discover_cache.json
