@@ -116,11 +116,36 @@ Presets with pinned revisions are commented in `config/.env.example`:
 
 The third shape is the woodsapp app-config object. Descriptions are returned on each result row and shown under the label.
 
+## Pick a model from the page
+
+`config/models_catalog.json` is a small offline catalog of public models that fit a low-resource machine (set `MODELS_CATALOG_PATH` to use another file). The page lists the ones this machine can run under **Models**, and `GET /api/models` returns the same data.
+
+Each entry is checked against this machine before it is offered:
+
+- `min_ram_gb` against total RAM (10% slack, since a "2 GB" machine reports a little under 2 GiB),
+- `approx_size_mb` against free disk at `weights/` (twice the size, skipped when the snapshot is already there),
+- the backend (`timm` or `transformers`) is importable and an adapter is registered for the task.
+
+RAM and disk come from `psutil` when it is installed (`pip install -r requirements-optional.txt`). Without it, Linux reads `/proc/meminfo` and disk space comes from `shutil.disk_usage`. CUDA is reported from `torch.cuda.is_available()`.
+
+Choosing a model (`POST /api/models/select` with `{"id": "<catalog id>"}`):
+
+1. reuses the exact pinned snapshot when it is already under `weights/` or in the Hugging Face cache, so it works with no network,
+2. otherwise downloads it with the same code path as `install_weights.py`,
+3. loads it in a fresh `ModelService` and switches the page and `/api/predict` to it,
+4. writes `MODEL_ID`, `MODEL_REVISION`, `MODEL_TASK` and `MODEL_BACKEND` to `config/.env` (other lines are kept), so the next start uses the same model.
+
+If the download or the load fails, the error is shown, nothing is written, and the previous model stays active. Selection is turned off while `MODEL_WEIGHTS` is set. Shell exports still beat `config/.env`, and the response warns when one would.
+
 ## API
 
 `GET /api/health` returns `{"status": "ok"}`.
 
 `GET /api/info` returns the configured repo, task, backend, device, dtype, and whether the module is loaded. The page uses this to choose an image input or a text input.
+
+`GET /api/models` returns the catalog filtered for this machine: `models` (can run here), `excluded` (with `reasons`), `capabilities`, `active`, and `installed` (catalog ids whose pinned snapshot is on disk).
+
+`POST /api/models/select` switches to a catalog model, as described above. Errors are 404 for an unknown id, 409 when it cannot run here or `MODEL_WEIGHTS` is set, 502 when it is missing and cannot be downloaded, and 500 when it will not load.
 
 `POST /api/predict` runs the model.
 
@@ -203,7 +228,7 @@ PyTorch is the part that uses memory. The default MobileNet weights are about 10
 
 `TORCH_DTYPE=float16` (or `bfloat16`) is for CUDA and MPS. On CPU the app stays on float32, because half-precision convolutions there are often unsupported or slower. `ALLOW_CPU_HALF=1` keeps the requested dtype anyway.
 
-One model is loaded at a time. Changing `MODEL_ID` and restarting the process is how you switch. A ViT-L checkpoint around 1.2 GB needs a machine with room for the weights, the framework, and the activations. On a 4 GB machine that means swap and a quiet desktop. On a GPU machine, `DEVICE=auto` selects CUDA when it is present, and float16 cuts the weight storage. The install path does not change: the same `install_weights.py` call writes the snapshot under `weights/`.
+One model is loaded at a time. Pick another one on the page, or change `MODEL_ID` and restart the process. A ViT-L checkpoint around 1.2 GB needs a machine with room for the weights, the framework, and the activations. On a 4 GB machine that means swap and a quiet desktop. On a GPU machine, `DEVICE=auto` selects CUDA when it is present, and float16 cuts the weight storage. The install path does not change: the same `install_weights.py` call writes the snapshot under `weights/`.
 
 Gated repos need `HF_TOKEN` in the environment or in `config/.env`. Public repos used by the defaults do not.
 
@@ -213,7 +238,7 @@ Gated repos need `HF_TOKEN` in the environment or in `config/.env`. Public repos
 python -m pytest
 ```
 
-`tests/test_paths.py`, `tests/test_labels.py`, `tests/test_registry.py`, and `tests/test_api.py` stay offline. `tests/test_smoke.py` downloads the four tiny presets into `weights/` the first time, runs each one through `POST /api/predict`, and reuses the snapshots after that. The weight tree is gitignored.
+`tests/test_paths.py`, `tests/test_labels.py`, `tests/test_registry.py`, `tests/test_api.py`, and `tests/test_models.py` stay offline. `tests/test_smoke.py` downloads the four tiny presets into `weights/` the first time, runs each one through `POST /api/predict`, and reuses the snapshots after that. The weight tree is gitignored.
 
 ## Layout
 
@@ -222,8 +247,11 @@ app.py                      Flask routes
 install_weights.py          download or reuse the configured snapshot
 paths.py                    portable paths, cache search, hf_hub_download
 config/.env.example         model id, revision, task, device
+config/models_catalog.json  offline model catalog for the picker
 modelwidget/settings.py     environment values
 modelwidget/service.py      lazy load and the request lock
+modelwidget/capabilities.py RAM, disk, CUDA and backend checks
+modelwidget/catalog.py      catalog filtering, install-if-missing, config/.env writes
 modelwidget/adapters/       image and text adapters
 templates/index.html        upload or text form
 static/                     page styles and the fetch client

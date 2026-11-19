@@ -1,0 +1,5 @@
+# Recommended extras. The app runs without them.
+#
+# psutil gives the model picker accurate RAM and disk numbers on every OS.
+# Without it, Linux reads /proc/meminfo and other systems skip the RAM check.
+psutil>=5.9

@@ -24,6 +24,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 WEIGHTS_DIR = PROJECT_ROOT / "weights"
 
+# Keys exported in the shell before any .env file was read. A shell export
+# wins over config/.env, so the model picker warns when it cannot take effect.
+SHELL_ENV_KEYS = frozenset(os.environ)
+
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _SKIP_NAMES = {".gitattributes", "README.md", "readme.md", "LICENSE", "LICENSE.txt"}
 _SKIP_SUFFIXES = (

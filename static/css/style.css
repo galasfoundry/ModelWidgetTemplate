@@ -186,3 +186,51 @@ ol.scores li:first-child {
     grid-column: 1 / -1;
   }
 }
+
+#model-picker {
+  margin-top: 1.5rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem 1rem 1.1rem;
+}
+
+#model-picker h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.picker-item {
+  border-top: 1px solid var(--line);
+  padding: 0.7rem 0;
+}
+
+.picker-item.active {
+  background: var(--accent-soft);
+  margin: 0 -1rem;
+  padding: 0.7rem 1rem;
+}
+
+.picker-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.badge {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+#model-picker summary {
+  cursor: pointer;
+  color: var(--muted);
+  margin-top: 0.6rem;
+}
