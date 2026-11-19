@@ -35,6 +35,11 @@ CATALOG_PATH = paths.PROJECT_ROOT / "config" / "models_catalog.json"
 OVERRIDE_ENV_PATH = paths.PROJECT_ROOT / "config" / ".env"
 
 REQUIRED_FIELDS = ("id", "name", "hf_id", "revision", "task", "backend")
+# "available" entries can be installed from the picker. "planned" entries are
+# listed for the roadmap (for example GGUF models for a llama.cpp backend) and
+# are never offered for install until their backend is supported.
+STATUSES = ("available", "planned")
+CATEGORIES = ("vision", "text", "llm", "audio", "other")
 SETTING_KEYS = {
     "MODEL_ID": "hf_id",
     "MODEL_REVISION": "revision",
@@ -71,6 +76,7 @@ def load_catalog(path: Path | None = None) -> dict:
     if not isinstance(data, dict) or not isinstance(data.get("models"), list):
         raise SelectionError(f"Model catalog at {path} has no 'models' list.", 500)
     models: list[dict] = []
+    planned: list[dict] = []
     invalid: list[dict] = []
     seen: set[str] = set()
     for index, entry in enumerate(data["models"]):
@@ -85,13 +91,18 @@ def load_catalog(path: Path | None = None) -> dict:
         if entry["id"] in seen:
             invalid.append({"index": index, "error": f"duplicate id {entry['id']!r}"})
             continue
+        status = entry.get("status", "available")
+        if status not in STATUSES:
+            invalid.append({"index": index, "error": f"unknown status {status!r}"})
+            continue
         seen.add(entry["id"])
-        models.append(entry)
+        (planned if status == "planned" else models).append(entry)
     return {
         "version": data.get("version"),
         "description": data.get("description", ""),
         "path": str(path),
         "models": models,
+        "planned": planned,
         "invalid": invalid,
     }
 
@@ -139,6 +150,7 @@ def evaluate(entry: dict, caps: dict, weights_dir: Path) -> dict:
         reasons.append(f"no adapter for {entry['task']} via {backend}")
 
     result = dict(entry)
+    result["category"] = category_of(entry)
     result["compatible"] = not reasons
     result["reasons"] = reasons
     result["installed"] = snapshot is not None
@@ -152,6 +164,21 @@ def _number(value) -> float | None:
     if isinstance(value, (int, float)):
         return float(value)
     return None
+
+
+def category_of(entry: dict) -> str:
+    """The entry's category, or one inferred from its task for older catalogs."""
+    category = entry.get("category")
+    if category in CATEGORIES:
+        return category
+    task = str(entry.get("task", ""))
+    if task.startswith("image"):
+        return "vision"
+    if task == "text-generation":
+        return "llm"
+    if task.startswith("text"):
+        return "text"
+    return "other"
 
 
 def is_active(entry: dict, settings: Settings) -> bool:

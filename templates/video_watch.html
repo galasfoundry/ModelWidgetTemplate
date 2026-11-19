@@ -1,0 +1,11 @@
+{% extends "fb_base.html" %}
+{% block title %}{{ video.title }} · The First Book{% endblock %}
+{% block content %}
+<h1>{{ video.title }}</h1>
+<video controls preload="metadata" width="100%">
+  <source src="{{ url_for('firstbook.video_file', rel=video.id) }}" type="{{ video.mimetype }}">
+</video>
+<p class="meta">{{ video.topic }}{% if video.tags %} · {{ video.tags|join(", ") }}{% endif %}</p>
+{% if video.description %}<p>{{ video.description }}</p>{% endif %}
+{% if video.source or video.license %}<p class="meta">{{ video.source }} {{ video.license }}</p>{% endif %}
+{% endblock %}

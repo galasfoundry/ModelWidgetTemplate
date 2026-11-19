@@ -234,3 +234,7 @@ ol.scores li:first-child {
   color: var(--muted);
   margin-top: 0.6rem;
 }
+
+/* The First Book navigation and bare section pages. UI polish is pending. */
+.fb-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.guide-text { white-space: pre-wrap; }

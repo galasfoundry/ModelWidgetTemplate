@@ -1,0 +1,22 @@
+{% extends "fb_base.html" %}
+{% block title %}Videos · The First Book{% endblock %}
+{% block content %}
+<h1>Videos</h1>
+<form method="get">
+  <input name="q" value="{{ q }}" placeholder="Search videos">
+  <select name="topic">
+    <option value="">All topics</option>
+    {% for t, n in topics.items() %}<option value="{{ t }}" {% if t == topic %}selected{% endif %}>{{ t }} ({{ n }})</option>{% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+{% if videos %}
+<ul id="video-list">
+  {% for v in videos %}
+  <li><a href="{{ url_for('firstbook.video_watch', rel=v.id) }}">{{ v.title }}</a> · {{ v.topic }}{% if v.tags %} · {{ v.tags|join(", ") }}{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No videos found. See <code>library/videos/README.md</code>.</p>
+{% endif %}
+{% endblock %}

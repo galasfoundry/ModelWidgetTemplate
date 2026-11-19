@@ -1,0 +1,16 @@
+{% extends "fb_base.html" %}
+{% block title %}Guides · The First Book{% endblock %}
+{% block content %}
+<h1>Guides</h1>
+<form method="get"><input name="q" value="{{ q }}" placeholder="Search guides"> <button type="submit">Search</button></form>
+{% if guides %}
+<ul id="guide-list">
+  {% for g in guides %}
+  <li><a href="{{ url_for('firstbook.guide_page', slug=g.slug) }}">{{ g.title }}</a>{% if g.placeholder %} <small>(placeholder)</small>{% endif %}
+    {% if g.snippet %}<br><small>{{ g.snippet }}</small>{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No guides match.</p>
+{% endif %}
+{% endblock %}

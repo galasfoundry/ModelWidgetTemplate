@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "videos": [
+    {
+      "file": "electronics/example-soldering-basics.mp4",
+      "title": "Example: soldering basics",
+      "topic": "electronics",
+      "tags": ["soldering", "repair", "example"],
+      "duration_s": null,
+      "description": "Example entry showing the format. Not a real file.",
+      "source": "where the file came from",
+      "license": "licence or permission note"
+    }
+  ]
+}

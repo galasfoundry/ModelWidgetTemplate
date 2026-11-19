@@ -88,6 +88,8 @@ def detect_capabilities(weights_dir: Path) -> dict:
         "weights_dir": str(weights_dir),
         "cuda_available": _cuda_available(),
         "backends": {name: _backend_available(name) for name in ("timm", "transformers")},
+        # Not used by the picker yet; reported so the planned GGUF path can be gated on it.
+        "optional_backends": {"llama_cpp": _backend_available("llama_cpp")},
         "psutil": _backend_available("psutil"),
         "source": source,
     }

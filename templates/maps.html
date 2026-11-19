@@ -1,0 +1,25 @@
+{% extends "fb_base.html" %}
+{% block title %}Maps · The First Book{% endblock %}
+{% block content %}
+<h1>Maps</h1>
+<p class="meta">Map packs found in the maps folder. A local map viewer is not bundled yet; tiles are served at the URLs below.</p>
+{% if packs %}
+<ul id="map-packs">
+  {% for p in packs %}
+  <li><strong>{{ p.title }}</strong> ({{ p.kind }}, {{ p.size_mb }} MB)
+    {% if p.tile_url %}<br><code>{{ p.tile_url }}</code>{% endif %}
+    {% if p.file_url %}<br><code>{{ p.file_url }}</code>{% endif %}
+    {% if p.attribution %}<br><small>{{ p.attribution|striptags }}</small>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No map packs yet. See <code>library/maps/README.md</code> for how to add a UK pack.</p>
+{% endif %}
+<h2>Known UK packs</h2>
+<ul>
+  {% for c in catalog.packs %}
+  <li><strong>{{ c.title }}</strong> → <code>{{ c.filename }}</code> · {{ c.license }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

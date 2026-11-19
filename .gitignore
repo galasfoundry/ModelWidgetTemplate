@@ -20,3 +20,10 @@ weights/*
 # OS
 .DS_Store
 Thumbs.db
+
+# The First Book content stays on the machine that has it.
+library/maps/*
+!library/maps/README.md
+library/videos/*
+!library/videos/README.md
+!library/videos/videos.example.json

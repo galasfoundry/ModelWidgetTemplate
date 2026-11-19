@@ -1,0 +1,23 @@
+{% extends "fb_base.html" %}
+{% block content %}
+<header>
+  <p class="eyebrow">Fully offline</p>
+  <h1>The First Book</h1>
+  <p class="meta">UK maps, a how-to video library, guides and small local models. Nothing here needs the internet.</p>
+</header>
+<section id="fb-status">
+  <ul>
+    <li><a href="{{ url_for('firstbook.maps_page') }}">Maps</a>: {{ status.maps.count }} pack(s)</li>
+    <li><a href="{{ url_for('firstbook.videos_page') }}">Videos</a>: {{ status.videos.count }}</li>
+    <li><a href="{{ url_for('firstbook.guides_page') }}">Guides</a>: {{ status.guides.count }}</li>
+    <li><a href="{{ url_for('index') }}">Models</a>:
+      {% if status.models.error %}{{ status.models.error }}{% else %}{{ status.models.installed|length }} installed, active {{ status.models.active.model_id }}{% endif %}</li>
+  </ul>
+  <p class="meta">
+    {% if status.capabilities.ram_total_gb %}{{ status.capabilities.ram_total_gb }} GB RAM · {% endif %}
+    {% if status.capabilities.disk_free_mb %}{{ (status.capabilities.disk_free_mb / 1024)|round(1) }} GB disk free · {% endif %}
+    {{ "CUDA GPU" if status.capabilities.cuda_available else "CPU only" }}
+  </p>
+  <p class="meta">Library folder: <code>{{ status.library.root }}</code></p>
+</section>
+{% endblock %}
