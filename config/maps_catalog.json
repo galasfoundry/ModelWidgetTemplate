@@ -5,6 +5,38 @@
   "uk_bbox": [-8.65, 49.86, 1.77, 60.86],
   "packs": [
     {
+      "id": "demo-uk-overview",
+      "title": "Demo: UK overview (Protomaps, zoom 0-8)",
+      "filename": "uk-overview.pmtiles",
+      "kind": "pmtiles",
+      "tile_format": "pbf",
+      "demo": true,
+      "bounds": [-8.65, 49.86, 1.77, 60.86],
+      "approx_size_mb": 7,
+      "source_url": "https://maps.protomaps.com/builds/",
+      "how_to_get": "scripts/fetch_demo_map.sh (pmtiles extract of the daily build, UK bbox, --maxzoom=8).",
+      "license": "ODbL 1.0 (OpenStreetMap data)",
+      "license_url": "https://www.openstreetmap.org/copyright",
+      "attribution": "Protomaps © OpenStreetMap contributors",
+      "viewer": "/maps (MapLibre GL JS + pmtiles.js, vendored)"
+    },
+    {
+      "id": "demo-bristol",
+      "title": "Demo: Bristol and Bath (Protomaps, zoom 0-15)",
+      "filename": "bristol.pmtiles",
+      "kind": "pmtiles",
+      "tile_format": "pbf",
+      "demo": true,
+      "bounds": [-2.75, 51.38, -2.45, 51.56],
+      "approx_size_mb": 23,
+      "source_url": "https://maps.protomaps.com/builds/",
+      "how_to_get": "scripts/fetch_demo_map.sh (pmtiles extract of the daily build, --bbox=-2.75,51.38,-2.45,51.56 --maxzoom=15).",
+      "license": "ODbL 1.0 (OpenStreetMap data)",
+      "license_url": "https://www.openstreetmap.org/copyright",
+      "attribution": "Protomaps © OpenStreetMap contributors",
+      "viewer": "/maps (MapLibre GL JS + pmtiles.js, vendored)"
+    },
+    {
       "id": "uk-protomaps",
       "title": "UK basemap (Protomaps, vector)",
       "filename": "uk.pmtiles",
@@ -16,7 +48,7 @@
       "license": "ODbL 1.0 (OpenStreetMap data)",
       "license_url": "https://www.openstreetmap.org/copyright",
       "attribution": "© OpenStreetMap contributors · Protomaps",
-      "viewer": "MapLibre GL JS + pmtiles.js, vendored under static/vendor/ (planned)"
+      "viewer": "MapLibre GL JS + pmtiles.js, vendored under static/vendor/, shown on /maps"
     },
     {
       "id": "uk-osm-mbtiles",
@@ -30,7 +62,7 @@
       "license": "ODbL 1.0 (OpenStreetMap data); OpenMapTiles schema is CC-BY 4.0",
       "license_url": "https://www.openstreetmap.org/copyright",
       "attribution": "© OpenMapTiles © OpenStreetMap contributors",
-      "viewer": "MapLibre GL JS, vendored under static/vendor/ (planned)"
+      "viewer": "MapLibre GL JS, vendored under static/vendor/, shown on /maps"
     },
     {
       "id": "os-open-zoomstack",
@@ -47,7 +79,7 @@
       "license": "Open Government Licence v3.0",
       "license_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
       "attribution": "Contains OS data © Crown copyright and database right",
-      "viewer": "MapLibre GL JS, vendored under static/vendor/ (planned)"
+      "viewer": "MapLibre GL JS, vendored under static/vendor/, shown on /maps"
     }
   ]
 }

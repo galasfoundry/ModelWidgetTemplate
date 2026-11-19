@@ -26,6 +26,9 @@ modelwidget/gguf.py         planned llama.cpp GGUF backend (stub, not wired in)
 config/models_catalog.json  model catalog
 config/maps_catalog.json    known UK map packs, sources and licences
 scripts/build_video_manifest.py  scan a folder into videos.json (ffprobe optional)
+scripts/fetch_demo_map.py   setup-time UK map extracts from the Protomaps build
+static/js/maps.js           the /maps viewer
+static/vendor/              MapLibre GL JS, pmtiles.js, Protomaps style, glyphs, sprites
 templates/, static/         bare pages; no CDN, no remote assets
 library/                    offline content (see below)
 weights/                    model snapshots (unchanged)
@@ -83,6 +86,7 @@ from the project root; set them in `config/.env` or the shell.
 
 ### Adding a map pack
 
+0. Quickest: `python scripts/fetch_demo_map.py` (see below).
 1. While online, fetch or build a pack using the `how_to_get` notes in
    `config/maps_catalog.json`. A low `--maxzoom` or small bbox keeps it small.
 2. Copy it into `library/maps/` with the catalog `filename`
@@ -90,13 +94,57 @@ from the project root; set them in `config/.env` or the shell.
    catalog's title and licence.
 3. Restart nothing: `/api/maps` rescans the folder on every request.
 
-### Viewer (planned)
+### Demo packs and bigger UK extracts
 
-No map viewer is bundled yet. The plan is to vendor **MapLibre GL JS** (plus
-`pmtiles.js` for PMTiles) as files under `static/vendor/`, with a local
-style JSON and local glyphs/sprites, so there is no CDN dependence. Leaflet
-is the lighter fallback for raster MBTiles. `tests/test_offline.py` fails if
-any template or static file references a remote URL.
+`scripts/fetch_demo_map.py` is a setup tool: run it once while online. It
+fetches the go-pmtiles CLI (v1.31.2) into `tools/` if `pmtiles` is not on
+PATH, finds the newest Protomaps daily build, and cuts extracts with HTTP
+range requests (the 100+ GB planet file is never downloaded):
+
+| Command | Pack | Size (18 Nov 2026 build) |
+| --- | --- | --- |
+| `python scripts/fetch_demo_map.py` | `uk-overview.pmtiles` (UK bbox, zoom 0-8) + `bristol.pmtiles` (Bristol and Bath, bbox -2.75,51.38,-2.45,51.56, zoom 0-15) | ~6 MB + ~23 MB |
+| `… --uk 12` | `uk-z12.pmtiles`, whole UK to zoom 12 (towns, main roads) | ~350 MB |
+| `… --uk 14` | `uk-z14.pmtiles`, whole UK to zoom 14 (streets) | ~1.5 GB |
+| `… --only custom --name leeds --bbox=-1.65,53.75,-1.45,53.85` | any city or region, zoom 15 | a few MB to tens of MB |
+
+`--dry-run` prints the size first; `--force` replaces an existing pack. The
+viewer overzooms past a pack's max zoom, so a z12 UK pack still works zoomed
+in, just with less detail.
+
+### Viewer
+
+`/maps` is a MapLibre GL JS viewer. Everything it loads comes from this
+server:
+
+* `static/vendor/maplibre-gl/` MapLibre GL JS 5.24.1 (UMD build, BSD-3-Clause)
+* `static/vendor/pmtiles/` pmtiles.js 4.5.0 (BSD-3-Clause), registered as the
+  `pmtiles://` protocol and pointed at `/maps/files/<pack>.pmtiles`
+* `static/vendor/protomaps-basemaps/` @protomaps/basemaps 5.7.2 style
+  generator (code BSD-3-Clause, design CC0), "light" flavour, English labels
+* `static/vendor/basemaps-assets/` Noto Sans Regular/Medium/Italic glyphs for
+  Latin ranges (0-255, 256-511, 8192-8447; SIL OFL) and the v4 "light"
+  sprite (derived from MIT tangrams/icons)
+
+See `static/vendor/README.md` for exact sources and how to update them.
+
+How a pack is drawn (`static/js/maps.js`):
+
+| Pack | Source | Style |
+| --- | --- | --- |
+| PMTiles, vector, Protomaps schema | `pmtiles://` | Protomaps light basemap with labels |
+| MBTiles `pbf`, Protomaps schema | `/tiles/<pack>/{z}/{x}/{y}` | same |
+| Vector, other schema (OS Open Zoomstack, OpenMapTiles) | either | plain generic style: every layer as fill / line / point, **no labels** yet |
+| PMTiles or MBTiles raster (png/jpg/webp) | either | raster layer |
+
+The map opens on the pack's bounds (catalog `bounds`, MBTiles metadata or the
+PMTiles header), falling back to the whole UK. Attribution comes from the
+catalog entry, then the pack metadata, then the catalog default
+("© OpenStreetMap contributors"), and is shown in the map corner.
+
+Labels outside Latin script (e.g. foreign country names at low zoom) have no
+vendored glyphs; MapLibre logs a 404 and draws them with a local system font.
+Adding more ranges is just copying more `.pbf` files into the font folders.
 
 ## Videos
 
@@ -145,7 +193,8 @@ The existing picker is extended, not replaced:
 ## Roadmap
 
 1. Fix the UI bugs Robin found in the model picker page (see Known issues).
-2. Vendor MapLibre GL JS + pmtiles.js and a local UK style; add a map view.
+2. Map viewer follow-ups: labels and a proper style for OS Open Zoomstack /
+   OpenMapTiles packs, search by place name, GPS position, offline routing.
 3. Wire the llama.cpp GGUF backend: single-file download, adapter, then flip
    the planned entries to `available`.
 4. Render Markdown guides (small vendored or stdlib renderer); real guides
@@ -160,5 +209,6 @@ The existing picker is extended, not replaced:
   Robin in the browser and are **not fixed yet**; this structure work leaves
   that page as it was apart from the shared navigation bar.
 * The new section pages are deliberately bare (plain lists, raw-text guides).
-* No map viewer yet: tiles and PMTiles are served but not drawn.
+* The map viewer is bare: one pack at a time, no place search, and the
+  generic style for non-Protomaps vector packs has no labels.
 * `scripts/build_video_manifest.py` drops entries whose files are gone.

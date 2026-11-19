@@ -19,6 +19,8 @@ import re
 import sqlite3
 from pathlib import Path
 
+# West, south, east, north. The viewer opens here when a pack has no bounds.
+UK_BBOX = [-8.65, 49.86, 1.77, 60.86]
 PACK_SUFFIXES = (".mbtiles", ".pmtiles")
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
@@ -37,14 +39,15 @@ def load_catalog(path: Path) -> dict:
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        return {"version": None, "packs": [], "error": f"{path}: {exc}"}
+        return {"version": None, "packs": [], "uk_bbox": UK_BBOX, "error": f"{path}: {exc}"}
     packs = data.get("packs") if isinstance(data, dict) else None
     if not isinstance(packs, list):
-        return {"version": None, "packs": [], "error": f"{path}: no 'packs' list"}
+        return {"version": None, "packs": [], "uk_bbox": UK_BBOX, "error": f"{path}: no 'packs' list"}
     return {
         "version": data.get("version"),
         "description": data.get("description", ""),
         "attribution_default": data.get("attribution_default", ""),
+        "uk_bbox": data.get("uk_bbox") or UK_BBOX,
         "packs": [p for p in packs if isinstance(p, dict) and p.get("id")],
     }
 
@@ -69,17 +72,31 @@ def mbtiles_metadata(path: Path) -> dict:
             meta[key] = int(meta[key])
         except (KeyError, TypeError, ValueError):
             meta.pop(key, None)
-    if isinstance(meta.get("bounds"), str):
+    for key in ("bounds", "center"):
+        if isinstance(meta.get(key), str):
+            try:
+                meta[key] = [float(v) for v in meta[key].split(",")]
+            except ValueError:
+                pass
+    # Vector MBTiles describe their layers in a JSON blob; the viewer uses the
+    # layer ids to build a plain style when it does not know the schema.
+    if isinstance(meta.get("json"), str):
         try:
-            meta["bounds"] = [float(v) for v in meta["bounds"].split(",")]
-        except ValueError:
-            pass
+            blob = json.loads(meta.pop("json"))
+        except json.JSONDecodeError:
+            blob = {}
+        layers = blob.get("vector_layers") if isinstance(blob, dict) else None
+        if isinstance(layers, list):
+            meta["vector_layers"] = [
+                {"id": str(layer["id"])} for layer in layers if isinstance(layer, dict) and layer.get("id")
+            ]
     return meta
 
 
 def list_packs(maps_dir: Path, catalog: dict | None = None) -> list[dict]:
     """Every pack file in ``maps_dir``, joined to its catalog entry by filename."""
     by_file = {}
+    default_attribution = (catalog or {}).get("attribution_default", "")
     for entry in (catalog or {}).get("packs", []):
         if entry.get("filename"):
             by_file[entry["filename"]] = entry
@@ -113,6 +130,10 @@ def list_packs(maps_dir: Path, catalog: dict | None = None) -> list[dict]:
                 pack["attribution"] = meta.get("attribution", "")
         else:
             pack["file_url"] = f"/maps/files/{file.name}"
+        if not pack["attribution"]:
+            pack["attribution"] = default_attribution
+        # Packs that ship whole-UK coverage open on the UK; others on their bounds.
+        pack["bounds"] = (pack.get("metadata") or {}).get("bounds") or entry.get("bounds")
         packs.append(pack)
     return packs
 
