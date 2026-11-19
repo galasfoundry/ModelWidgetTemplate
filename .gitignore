@@ -27,3 +27,7 @@ library/maps/*
 library/videos/*
 !library/videos/README.md
 !library/videos/videos.example.json
+
+# Setup tools downloaded by scripts/fetch_demo_map.py (pmtiles CLI).
+tools/
+library/maps/*.part

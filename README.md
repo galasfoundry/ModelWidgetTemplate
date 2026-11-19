@@ -2,7 +2,9 @@
 
 > **The First Book.** This repo is also the base of *The First Book*, a fully
 > offline UK maps, how-to video, guides and local-model library for a 4 GB
-> laptop. Open http://127.0.0.1:5000/home after `python app.py`. Content goes
+> laptop. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
+> look at, run `python scripts/fetch_demo_map.py` once while online, then open
+> http://127.0.0.1:5000/maps . Content goes
 > in `library/` (maps, videos, guides); see
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layout, routes, how to
 > add map packs and videos, the roadmap and known issues (including the

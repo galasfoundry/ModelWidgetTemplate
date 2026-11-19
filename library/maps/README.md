@@ -9,3 +9,12 @@ name in URLs, so keep it to letters, digits, `.`, `_` and `-`.
 `config/maps_catalog.json` lists the packs we know about, where to get each one
 while online, the expected filename, and its licence and attribution. Always
 show the attribution (for OpenStreetMap data: "© OpenStreetMap contributors").
+
+Quick start while online:
+
+```bash
+python scripts/fetch_demo_map.py           # uk-overview (~6 MB) + bristol (~23 MB)
+python scripts/fetch_demo_map.py --uk 12   # whole UK to zoom 12 (~350 MB)
+```
+
+Then open `/maps`. See `docs/ARCHITECTURE.md` for more options.

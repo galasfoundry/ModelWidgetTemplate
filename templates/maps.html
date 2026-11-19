@@ -1,9 +1,21 @@
 {% extends "fb_base.html" %}
 {% block title %}Maps · The First Book{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre-gl/maplibre-gl.css') }}">
+{% endblock %}
 {% block content %}
 <h1>Maps</h1>
-<p class="meta">Map packs found in the maps folder. A local map viewer is not bundled yet; tiles are served at the URLs below.</p>
 {% if packs %}
+<p>
+  <label for="map-pack">Map pack</label>
+  <select id="map-pack">
+    {% for p in packs %}<option value="{{ p.name }}">{{ p.title }} ({{ p.kind }}, {{ p.size_mb }} MB)</option>{% endfor %}
+  </select>
+  <span id="map-status" class="meta" role="status"></span>
+</p>
+<div id="map" class="fb-map"
+     data-packs-url="{{ url_for('firstbook.api_maps') }}"
+     data-assets="{{ url_for('static', filename='vendor/basemaps-assets') }}"></div>
 <ul id="map-packs">
   {% for p in packs %}
   <li><strong>{{ p.title }}</strong> ({{ p.kind }}, {{ p.size_mb }} MB)
@@ -14,7 +26,7 @@
   {% endfor %}
 </ul>
 {% else %}
-<p>No map packs yet. See <code>library/maps/README.md</code> for how to add a UK pack.</p>
+<p>No map packs yet. Run <code>scripts/fetch_demo_map.sh</code> while online, or see <code>library/maps/README.md</code>.</p>
 {% endif %}
 <h2>Known UK packs</h2>
 <ul>
@@ -22,4 +34,12 @@
   <li><strong>{{ c.title }}</strong> → <code>{{ c.filename }}</code> · {{ c.license }}</li>
   {% endfor %}
 </ul>
+{% endblock %}
+{% block scripts %}
+{% if packs %}
+<script src="{{ url_for('static', filename='vendor/maplibre-gl/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/pmtiles/pmtiles.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/protomaps-basemaps/basemaps.js') }}"></script>
+<script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+{% endif %}
 {% endblock %}
