@@ -43,8 +43,9 @@ class LlamaCppTextGenerator(ModelAdapter):
 
     def load(self, *, device: str, dtype=None) -> None:
         threads = self.settings.torch_num_threads or min(4, os.cpu_count() or 2)
+        n_ctx = int(getattr(self.settings, "llama_n_ctx", 0) or _env_int("LLAMA_N_CTX", 2048))
         self.generator = GGUFTextGenerator(
-            self.model_path(), n_ctx=_env_int("LLAMA_N_CTX", 2048), n_threads=threads
+            self.model_path(), n_ctx=n_ctx, n_threads=threads
         )
 
     def predict(self, *, image=None, text: str | None = None) -> dict:
@@ -58,3 +59,16 @@ class LlamaCppTextGenerator(ModelAdapter):
             "results": [{"label": "completion", "text": reply, "score": None, "rank": 1}],
             "text": reply,
         }
+
+    def stream_chat(self, messages, max_tokens: int = 384, stop_event=None):
+        if self.generator is None:
+            raise RuntimeError("The GGUF model is not loaded.")
+        yield from self.generator.stream_chat(
+            messages, max_tokens=max_tokens, stop_event=stop_event
+        )
+
+    def count_tokens(self, messages) -> int:
+        if self.generator is None:
+            raise RuntimeError("The GGUF model is not loaded.")
+        return self.generator.count_tokens(messages)
+

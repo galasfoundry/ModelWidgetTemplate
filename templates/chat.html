@@ -1,0 +1,30 @@
+{% extends "fb_base.html" %}
+{% block title %}Chat · The First Book{% endblock %}
+{% block content %}
+<h1>Chat</h1>
+<p class="meta">An offline assistant for UK survival and self-sufficiency. Replies stay on this machine.</p>
+<div id="chat-panel" data-ready="{{ 'true' if chat.ready else 'false' }}">
+  {% if not chat.ready %}
+  <p id="chat-message">{{ chat.message }}</p>
+  {% if chat.reason == "missing_backend" %}
+  <pre id="chat-install"><code>{{ chat.install_command }}</code></pre>
+  {% endif %}
+  <p><a href="{{ url_for('index') }}">Open the model page</a></p>
+  {% else %}
+  <p id="chat-message" class="meta">{% if chat.active_chat_model %}Using {{ chat.active_chat_model }}.{% endif %} Context {{ chat.n_ctx }} tokens; replies up to {{ chat.chat_max_tokens }} tokens.</p>
+  {% endif %}
+  <ol id="transcript"></ol>
+  <form id="chat-form">
+    <label for="chat-input">Message</label>
+    <textarea id="chat-input" name="message" rows="3" {% if not chat.ready %}disabled{% endif %}></textarea>
+    <p>
+      <button type="submit" id="chat-send" {% if not chat.ready %}disabled{% endif %}>Send</button>
+      <button type="button" id="chat-stop" disabled>Stop</button>
+      <button type="button" id="chat-clear" {% if not chat.ready %}disabled{% endif %}>Clear</button>
+    </p>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}" defer></script>
+{% endblock %}
