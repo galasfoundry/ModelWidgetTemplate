@@ -21,6 +21,8 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request
 from PIL import Image
 
+from firstbook.library import Library
+from firstbook.web import create_blueprint, model_summary
 from modelwidget import catalog
 from modelwidget.capabilities import detect_capabilities
 from modelwidget.service import ModelService
@@ -34,6 +36,7 @@ def create_app(
     *,
     override_env_path: Path | None = None,
     catalog_file: Path | None = None,
+    library: Library | None = None,
 ) -> Flask:
     settings = settings or Settings.from_env()
     service = service or ModelService(settings)
@@ -127,6 +130,8 @@ def create_app(
                 },
                 "models": compatible,
                 "excluded": excluded,
+                # Roadmap entries (e.g. GGUF for llama.cpp). Never installable yet.
+                "planned": [dict(item, category=catalog.category_of(item)) for item in data["planned"]],
                 "installed": [row["id"] for row in compatible + excluded if row["installed"]],
                 "weights_override": bool(os.environ.get("MODEL_WEIGHTS", "").strip()),
             }
@@ -204,6 +209,21 @@ def create_app(
             )
         return jsonify(payload)
 
+    # The First Book sections (maps, videos, guides, status). Local files only.
+    library = library or Library.from_env(weights_dir=settings.weights_dir)
+    app.config["LIBRARY"] = library
+    app.register_blueprint(
+        create_blueprint(
+            library,
+            lambda caps: model_summary(
+                lambda: catalog.load_catalog(app.config["CATALOG_PATH"]),
+                current().settings,
+                current().loaded,
+                caps,
+            ),
+        )
+    )
+
     @app.errorhandler(413)
     def too_large(_exc):
         return jsonify({"error": f"Upload is larger than {settings.max_upload_mb} MB."}), 413
@@ -218,6 +238,7 @@ def main() -> None:
     if not settings.lazy_load:
         service.ensure_loaded()
     print(f"Model widget at http://{settings.host}:{settings.port}/", flush=True)
+    print(f"The First Book at http://{settings.host}:{settings.port}/home", flush=True)
     application.run(host=settings.host, port=settings.port, threaded=True)
 
 

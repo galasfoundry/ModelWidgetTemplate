@@ -12,7 +12,9 @@
       "approx_size_mb": 10,
       "min_ram_gb": 2,
       "description": "Default light image classifier. Good for general object / plant / tool identification.",
-      "theme_tags": ["vision", "identification", "default"]
+      "theme_tags": ["vision", "identification", "default"],
+      "category": "vision",
+      "status": "available"
     },
     {
       "id": "tinystories-1m",
@@ -24,7 +26,9 @@
       "approx_size_mb": 5,
       "min_ram_gb": 2,
       "description": "Tiny language model. Useful for simple local guidance, checklists, or story-style notes.",
-      "theme_tags": ["text", "guidance", "lightweight"]
+      "theme_tags": ["text", "guidance", "lightweight"],
+      "category": "llm",
+      "status": "available"
     },
     {
       "id": "bedrock-sentiment-tiny",
@@ -36,7 +40,9 @@
       "approx_size_mb": 17,
       "min_ram_gb": 2,
       "description": "Tiny sentiment classifier.",
-      "theme_tags": ["text", "classification", "lightweight"]
+      "theme_tags": ["text", "classification", "lightweight"],
+      "category": "text",
+      "status": "available"
     },
     {
       "id": "mobilenetv2",
@@ -48,7 +54,74 @@
       "approx_size_mb": 14,
       "min_ram_gb": 2,
       "description": "Alternative light vision model via transformers.",
-      "theme_tags": ["vision", "identification"]
+      "theme_tags": ["vision", "identification"],
+      "category": "vision",
+      "status": "available"
+    },
+    {
+      "id": "gemma-3-270m-it-gguf",
+      "name": "Gemma 3 270M Instruct (GGUF Q4_K_M)",
+      "hf_id": "unsloth/gemma-3-270m-it-GGUF",
+      "revision": "c90975dbd40c0c7b275fefaae758c3415c906238",
+      "gguf_file": "gemma-3-270m-it-Q4_K_M.gguf",
+      "task": "text-generation",
+      "backend": "llama_cpp",
+      "category": "llm",
+      "status": "planned",
+      "approx_size_mb": 253,
+      "min_ram_gb": 2,
+      "license": "gemma (Gemma Terms of Use)",
+      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "theme_tags": ["llm", "chat", "gguf", "offline"]
+    },
+    {
+      "id": "smollm2-360m-instruct-gguf",
+      "name": "SmolLM2 360M Instruct (GGUF Q8_0)",
+      "hf_id": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "revision": "593b5a2e04c8f3e4ee880263f93e0bd2901ad47f",
+      "gguf_file": "smollm2-360m-instruct-q8_0.gguf",
+      "task": "text-generation",
+      "backend": "llama_cpp",
+      "category": "llm",
+      "status": "planned",
+      "approx_size_mb": 386,
+      "min_ram_gb": 2,
+      "license": "apache-2.0",
+      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "theme_tags": ["llm", "chat", "gguf", "offline"]
+    },
+    {
+      "id": "qwen2.5-0.5b-instruct-gguf",
+      "name": "Qwen2.5 0.5B Instruct (GGUF Q4_K_M)",
+      "hf_id": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+      "gguf_file": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+      "task": "text-generation",
+      "backend": "llama_cpp",
+      "category": "llm",
+      "status": "planned",
+      "approx_size_mb": 491,
+      "min_ram_gb": 2,
+      "license": "apache-2.0",
+      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "theme_tags": ["llm", "chat", "gguf", "offline"]
+    },
+    {
+      "id": "llama-3.2-1b-instruct-gguf",
+      "name": "Llama 3.2 1B Instruct (GGUF Q4_K_M)",
+      "hf_id": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "revision": "067b946cf014b7c697f3654f621d577a3e3afd1c",
+      "gguf_file": "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "task": "text-generation",
+      "backend": "llama_cpp",
+      "category": "llm",
+      "status": "planned",
+      "approx_size_mb": 808,
+      "min_ram_gb": 4,
+      "license": "llama3.2 (Llama 3.2 Community License)",
+      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "theme_tags": ["llm", "chat", "gguf", "offline"]
     }
-  ]
+  ],
+  "notes": "category: vision | text | llm | audio | other. status: available (installable) or planned (roadmap only, never installed). GGUF entries pin one quantised file via gguf_file at a verified Hugging Face commit."
 }

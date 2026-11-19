@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "description": "UK map packs The First Book knows about. Nothing here is downloaded by the app: fetch or build a pack by hand while online, drop the file into library/maps/ under the filename given, and it is served from disk. Sizes are not pinned because extracts change; check the source page.",
+  "attribution_default": "© OpenStreetMap contributors",
+  "uk_bbox": [-8.65, 49.86, 1.77, 60.86],
+  "packs": [
+    {
+      "id": "uk-protomaps",
+      "title": "UK basemap (Protomaps, vector)",
+      "filename": "uk.pmtiles",
+      "kind": "pmtiles",
+      "tile_format": "pbf",
+      "source_url": "https://maps.protomaps.com/builds/",
+      "docs_url": "https://docs.protomaps.com/basemaps/downloads",
+      "how_to_get": "Install the pmtiles CLI (https://github.com/protomaps/go-pmtiles), then extract the UK from a daily planet build: pmtiles extract https://build.protomaps.com/<YYYYMMDD>.pmtiles uk.pmtiles --bbox=-8.65,49.86,1.77,60.86 --maxzoom=14 . Lower --maxzoom (e.g. 12) for a much smaller file; a county-sized --bbox is handy for testing.",
+      "license": "ODbL 1.0 (OpenStreetMap data)",
+      "license_url": "https://www.openstreetmap.org/copyright",
+      "attribution": "© OpenStreetMap contributors · Protomaps",
+      "viewer": "MapLibre GL JS + pmtiles.js, vendored under static/vendor/ (planned)"
+    },
+    {
+      "id": "uk-osm-mbtiles",
+      "title": "UK OpenStreetMap vector tiles (MBTiles, self-built)",
+      "filename": "uk-osm.mbtiles",
+      "kind": "mbtiles",
+      "tile_format": "pbf",
+      "source_url": "https://download.geofabrik.de/europe/united-kingdom.html",
+      "docs_url": "https://github.com/onthegomap/planetiler",
+      "how_to_get": "Download the Geofabrik united-kingdom-latest.osm.pbf, then build MBTiles with planetiler (OpenMapTiles schema) or tilemaker (https://github.com/systemed/tilemaker). Served by /tiles/uk-osm/{z}/{x}/{y}.",
+      "license": "ODbL 1.0 (OpenStreetMap data); OpenMapTiles schema is CC-BY 4.0",
+      "license_url": "https://www.openstreetmap.org/copyright",
+      "attribution": "© OpenMapTiles © OpenStreetMap contributors",
+      "viewer": "MapLibre GL JS, vendored under static/vendor/ (planned)"
+    },
+    {
+      "id": "os-open-zoomstack",
+      "title": "OS Open Zoomstack (Ordnance Survey, vector)",
+      "filename": "os-open-zoomstack.mbtiles",
+      "kind": "mbtiles",
+      "tile_format": "pbf",
+      "source_url": "https://osdatahub.os.uk/downloads/open/OpenZoomstack",
+      "docs_url": "https://www.ordnancesurvey.co.uk/products/os-open-zoomstack",
+      "download_url": "https://api.os.uk/downloads/v1/products/OpenZoomstack/downloads?area=GB&format=Vector+Tiles&subformat=%28MBTiles%29&redirect",
+      "approx_size_mb": 2720,
+      "coverage": "Great Britain only (no Northern Ireland)",
+      "how_to_get": "Download the 'Vector Tiles (MBTiles)' format from the OS Data Hub (about 2.7 GB, listed as OS_Open_Zoomstack.mbtiles on 19 Nov 2026) and rename it to os-open-zoomstack.mbtiles.",
+      "license": "Open Government Licence v3.0",
+      "license_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+      "attribution": "Contains OS data © Crown copyright and database right",
+      "viewer": "MapLibre GL JS, vendored under static/vendor/ (planned)"
+    }
+  ]
+}

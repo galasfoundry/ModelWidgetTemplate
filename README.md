@@ -1,5 +1,13 @@
 # Model widget template
 
+> **The First Book.** This repo is also the base of *The First Book*, a fully
+> offline UK maps, how-to video, guides and local-model library for a 4 GB
+> laptop. Open http://127.0.0.1:5000/home after `python app.py`. Content goes
+> in `library/` (maps, videos, guides); see
+> [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layout, routes, how to
+> add map packs and videos, the roadmap and known issues (including the
+> pending UI fixes on the model picker page).
+
 A small Flask app that loads one Hugging Face model and serves it as a local web page plus a JSON API. Clone it, set a repo id in `config/.env`, run one weight install, and open the page.
 
 Paths are resolved from the project root (the folder that contains `app.py`), not from the working directory and not from any one computer. The layout follows the same rules as [woodsapp](https://github.com/galasfoundry/woodsapp): a project-relative `.env`, `hf_hub_download` into `weights/` at a pinned revision, and `install_weights.py` for the first download.
@@ -238,7 +246,7 @@ Gated repos need `HF_TOKEN` in the environment or in `config/.env`. Public repos
 python -m pytest
 ```
 
-`tests/test_paths.py`, `tests/test_labels.py`, `tests/test_registry.py`, `tests/test_api.py`, and `tests/test_models.py` stay offline. `tests/test_smoke.py` downloads the four tiny presets into `weights/` the first time, runs each one through `POST /api/predict`, and reuses the snapshots after that. The weight tree is gitignored.
+`tests/test_paths.py`, `tests/test_labels.py`, `tests/test_registry.py`, `tests/test_api.py`, `tests/test_models.py`, the `tests/test_firstbook_*.py` files and `tests/test_offline.py` stay offline (`python -m pytest --ignore=tests/test_smoke.py` runs only those). `tests/test_smoke.py` downloads the four tiny presets into `weights/` the first time, runs each one through `POST /api/predict`, and reuses the snapshots after that. The weight tree is gitignored.
 
 ## Layout
 
@@ -256,4 +264,10 @@ modelwidget/adapters/       image and text adapters
 templates/index.html        upload or text form
 static/                     page styles and the fetch client
 weights/                    local snapshots, not committed
+firstbook/                  The First Book: library paths, maps, videos, guides, routes
+config/maps_catalog.json    known UK map packs, sources and licences
+modelwidget/gguf.py         planned llama.cpp GGUF backend (stub)
+scripts/                    build_video_manifest.py
+library/                    offline content: maps/, videos/, guides/
+docs/ARCHITECTURE.md        The First Book structure and roadmap
 ```
