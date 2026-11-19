@@ -61,7 +61,11 @@ def _fake_snapshot(weights_dir: Path, entry: dict) -> Path:
 def test_shipped_catalog_loads():
     data = catalog.load_catalog(catalog.CATALOG_PATH)
     ids = [m["id"] for m in data["models"]]
-    assert ids == ["mobilenetv3-small", "tinystories-1m", "bedrock-sentiment-tiny", "mobilenetv2"]
+    assert ids == [
+        "mobilenetv3-small", "tinystories-1m", "bedrock-sentiment-tiny", "mobilenetv2",
+        "gemma-3-270m-it-gguf", "smollm2-360m-instruct-gguf",
+        "qwen2.5-0.5b-instruct-gguf", "llama-3.2-1b-instruct-gguf",
+    ]
     assert data["invalid"] == []
 
 
@@ -70,7 +74,7 @@ def test_capabilities_shape(tmp_path):
     assert caps["ram_total_gb"] is None or caps["ram_total_gb"] > 0
     assert caps["disk_free_mb"] is None or caps["disk_free_mb"] >= 0
     assert isinstance(caps["cuda_available"], bool)
-    assert set(caps["backends"]) == {"timm", "transformers"}
+    assert set(caps["backends"]) == {"timm", "transformers", "llama_cpp"}
 
 
 def test_evaluate_filters_ram_disk_backend(tmp_path):

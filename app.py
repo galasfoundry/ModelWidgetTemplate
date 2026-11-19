@@ -25,6 +25,7 @@ from firstbook.library import Library
 from firstbook.web import create_blueprint, model_summary
 from modelwidget import catalog
 from modelwidget.capabilities import detect_capabilities
+from modelwidget.downloads import DownloadManager
 from modelwidget.service import ModelService
 from modelwidget.settings import Settings
 from paths import PROJECT_ROOT
@@ -37,6 +38,7 @@ def create_app(
     override_env_path: Path | None = None,
     catalog_file: Path | None = None,
     library: Library | None = None,
+    downloads: DownloadManager | None = None,
 ) -> Flask:
     settings = settings or Settings.from_env()
     service = service or ModelService(settings)
@@ -50,6 +52,7 @@ def create_app(
     app.config["OVERRIDE_ENV_PATH"] = override_env_path or catalog.OVERRIDE_ENV_PATH
     app.config["CATALOG_PATH"] = catalog_file
     select_lock = threading.Lock()
+    app.config["DOWNLOADS"] = downloads or DownloadManager(settings.weights_dir)
 
     def current() -> ModelService:
         # The model picker swaps this object, so routes look it up per request.
@@ -109,6 +112,7 @@ def create_app(
         for entry in data["models"]:
             row = catalog.evaluate(entry, caps, active.weights_dir)
             row["active"] = catalog.is_active(entry, active)
+            row["download"] = app.config["DOWNLOADS"].get(entry["id"])
             (compatible if row["compatible"] else excluded).append(row)
         active_entry = next((row["id"] for row in compatible + excluded if row["active"]), None)
         return jsonify(
@@ -166,6 +170,10 @@ def create_app(
         entry = next((item for item in data["models"] if item["id"] == model_key), None)
         if entry is None:
             raise catalog.SelectionError(f"No catalog model with id {model_key!r}.", 404)
+        if app.config["DOWNLOADS"].busy(entry["id"]):
+            raise catalog.SelectionError(
+                f"{entry['name']} is still downloading. Use it when the download finishes.", 409
+            )
         old = current()
         base = old.settings
         caps = detect_capabilities(base.weights_dir)
@@ -186,7 +194,7 @@ def create_app(
                 f"{entry['name']} was installed at {snapshot} but would not load: {exc}", 500
             ) from exc
 
-        values = {key: entry[field] for key, field in catalog.SETTING_KEYS.items()}
+        values = {key: str(entry.get(field) or "") for key, field in catalog.SETTING_KEYS.items()}
         env_path = catalog.write_override(values, app.config["OVERRIDE_ENV_PATH"])
         # Keep this process consistent with the file for anything that rereads it.
         os.environ.update(values)
@@ -223,6 +231,59 @@ def create_app(
             ),
         )
     )
+
+    # ---- downloads (separate from activating) -------------------------------
+    def _catalog_entry(model_key: str) -> dict:
+        data = catalog.load_catalog(app.config["CATALOG_PATH"])
+        entry = next((item for item in data["models"] if item["id"] == model_key), None)
+        if entry is None:
+            planned = any(item["id"] == model_key for item in data["planned"])
+            raise catalog.SelectionError(
+                f"{model_key!r} is planned and cannot be downloaded yet."
+                if planned
+                else f"No catalog model with id {model_key!r}.",
+                409 if planned else 404,
+            )
+        return entry
+
+    @app.post("/api/models/<model_key>/download")
+    def download_model(model_key: str):
+        """Start a background download into weights/. Poll the status route."""
+        try:
+            entry = _catalog_entry(model_key)
+        except catalog.SelectionError as exc:
+            return jsonify({"error": str(exc)}), exc.status
+        weights_dir = current().settings.weights_dir
+        row = catalog.evaluate(entry, detect_capabilities(weights_dir), weights_dir)
+        if row["installed"]:
+            return jsonify({"id": entry["id"], "state": "done", "installed": True,
+                            "snapshot": row["snapshot"], "message": "Already on disk."}), 200
+        if not row["downloadable"]:
+            return jsonify({"error": f"{entry['name']} cannot be downloaded here: "
+                            f"{'; '.join(row['reasons'])}."}), 409
+        job = app.config["DOWNLOADS"].submit(entry)
+        return jsonify(dict(job, warnings=row["warnings"])), 202
+
+    @app.get("/api/models/<model_key>/status")
+    def model_status(model_key: str):
+        try:
+            entry = _catalog_entry(model_key)
+        except catalog.SelectionError as exc:
+            return jsonify({"error": str(exc)}), exc.status
+        job = app.config["DOWNLOADS"].get(entry["id"])
+        snapshot = catalog.entry_snapshot(entry, current().settings.weights_dir)
+        payload = job or {"id": entry["id"], "state": "idle", "message": "Not downloaded yet."}
+        payload["installed"] = snapshot is not None
+        payload["snapshot"] = None if snapshot is None else str(snapshot)
+        if snapshot is not None and payload["state"] == "idle":
+            payload.update(state="done", message="Already on disk.")
+        return jsonify(payload)
+
+    @app.get("/api/models/downloads")
+    def list_downloads():
+        jobs = app.config["DOWNLOADS"].all()
+        active = [j for j in jobs if j["state"] in ("queued", "downloading")]
+        return jsonify({"jobs": jobs, "active": len(active)})
 
     @app.errorhandler(413)
     def too_large(_exc):

@@ -21,8 +21,9 @@ def test_status_reports_content_and_capabilities(tmp_path):
     assert body["maps"]["count"] == 1 and body["videos"]["count"] == 1
     assert body["guides"] == {"count": 1, "placeholders": 1}
     models = body["models"]
-    assert models["catalog_count"] == 4
-    assert "qwen2.5-0.5b-instruct-gguf" in models["planned"]
+    assert models["catalog_count"] == 8
+    assert models["planned"] == []
+    assert models["by_category"]["llm"] == 5
     assert models["by_category"]["vision"] == 2
     assert "ram_total_gb" in body["capabilities"]
     assert "llama_cpp" in body["capabilities"]["optional_backends"]
@@ -54,19 +55,26 @@ def test_safe_child_blocks_escape(tmp_path):
     assert safe_child(tmp_path / "in", str(tmp_path / "secret")) is None
 
 
-def test_planned_models_are_never_installable(tmp_path):
+def test_gguf_entries_are_downloadable_single_files():
     data = catalog.load_catalog(catalog.CATALOG_PATH)
-    assert data["planned"], "expected planned GGUF entries"
-    for entry in data["planned"]:
-        assert entry["backend"] == "llama_cpp" and entry["gguf_file"].endswith(".gguf")
-        assert len(entry["revision"]) == 40
-    client = create_app(image_settings(tmp_path), override_env_path=tmp_path / ".env").test_client()
+    gguf = [m for m in data["models"] if m.get("gguf_file")]
+    assert len(gguf) == 4 and data["planned"] == []
+    for entry in gguf:
+        assert entry["status"] == "downloadable" and entry["backend"] == "llama_cpp"
+        assert entry["gguf_file"].endswith(".gguf") and len(entry["revision"]) == 40
+
+
+def test_planned_models_are_never_downloaded_or_selected(tmp_path):
+    planned = {"id": "future", "name": "Future", "hf_id": "a/b", "revision": "r" * 40,
+               "task": "text-generation", "backend": "llama_cpp", "status": "planned"}
+    path = tmp_path / "c.json"
+    path.write_text(json.dumps({"models": [planned]}), encoding="utf-8")
+    client = create_app(image_settings(tmp_path), override_env_path=tmp_path / ".env",
+                        catalog_file=path).test_client()
     body = client.get("/api/models").get_json()
-    listed = {m["id"] for m in body["models"] + body["excluded"]}
-    assert not listed & {p["id"] for p in body["planned"]}
-    assert all(p["category"] == "llm" for p in body["planned"])
-    response = client.post("/api/models/select", json={"id": data["planned"][0]["id"]})
-    assert response.status_code == 404
+    assert [p["id"] for p in body["planned"]] == ["future"]
+    assert client.post("/api/models/future/download").status_code == 409
+    assert client.post("/api/models/select", json={"id": "future"}).status_code == 404
 
 
 def test_unknown_status_is_invalid(tmp_path):

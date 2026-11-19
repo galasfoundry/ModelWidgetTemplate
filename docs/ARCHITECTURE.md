@@ -22,7 +22,10 @@ firstbook/guides.py         Markdown/text guides, keyword search
 firstbook/web.py            routes for /home, /maps, /videos, /guides and /api/status
 modelwidget/catalog.py      model catalog (category, status), filtering, install-if-missing
 modelwidget/capabilities.py RAM, disk, CUDA, backends (incl. optional llama_cpp)
-modelwidget/gguf.py         planned llama.cpp GGUF backend (stub, not wired in)
+modelwidget/downloads.py    background download jobs, progress, single-file GGUF fetch
+modelwidget/gguf.py         llama.cpp wrapper for GGUF models (optional llama-cpp-python)
+modelwidget/adapters/llama_cpp.py  text-generation adapter for GGUF
+scripts/download_models.py  CLI: list and download catalog models into weights/
 config/models_catalog.json  model catalog
 config/maps_catalog.json    known UK map packs, sources and licences
 scripts/build_video_manifest.py  scan a folder into videos.json (ffprobe optional)
@@ -64,7 +67,8 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /videos/file/<path>` | Stream a video with HTTP Range (206) |
 | `GET /guides`, `GET /api/guides?q=` | List and search guides |
 | `GET /guides/<slug>`, `GET /api/guides/<slug>` | One guide |
-| `GET /api/models`, `POST /api/models/select` | Model picker (unchanged; now also returns `planned`) |
+| `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately) |
+| `POST /api/models/<id>/download`, `GET /api/models/<id>/status`, `GET /api/models/downloads` | Background downloads into `weights/` with progress |
 
 ## Maps
 
@@ -175,28 +179,44 @@ explain the format; real guides should cite where their content came from.
 
 ## Models
 
-The existing picker is extended, not replaced:
+The picker is extended, not replaced:
 
 * Every catalog entry has `category` (`vision`, `text`, `llm`, `audio`,
-  `other`; inferred from `task` when missing) and `status` (`available` or
-  `planned`).
-* `planned` entries are returned separately by `GET /api/models` under
-  `planned` and are rejected by `POST /api/models/select` (404), so they are
-  never downloaded.
-* Four planned small GGUF chat models are listed for a future llama.cpp
-  backend (`modelwidget/gguf.py`, optional `llama-cpp-python`), each pinned to
-  a verified Hugging Face commit and one quantised file: Gemma 3 270M
-  (Q4_K_M, ~253 MB), SmolLM2 360M (Q8_0, ~386 MB), Qwen2.5 0.5B
-  (Q4_K_M, ~491 MB), Llama 3.2 1B (Q4_K_M, ~808 MB). Gemma and Llama have
-  their own licence terms (noted per entry).
+  `other`; inferred from `task` when missing) and `status`:
+  * `available`: download and use from the picker;
+  * `downloadable`: download any time; use only when its backend is
+    installed (the GGUF chat models need `llama-cpp-python`);
+  * `planned`: listed under `planned` only; download (409) and select (404)
+    refuse it.
+* **Downloads are separate from activation.** `modelwidget/downloads.py` has
+  a `DownloadManager` (one background worker thread, one job per model, state
+  in memory) behind `POST /api/models/<id>/download`, `GET
+  /api/models/<id>/status` and `GET /api/models/downloads`, and the same
+  `download_entry()` powers `scripts/download_models.py`. Files land in
+  `weights/` through `hf_hub_download(cache_dir=weights/)`. Progress comes from
+  huggingface_hub's own progress bars, capped at the planned size. Errors are
+  turned into readable messages (offline flag, network/proxy, gated, 404,
+  disk) and kept on the job.
+* RAM and disk limits block downloads as well as use. A missing backend only
+  blocks use. LLM entries of 700 MB or more on a machine with 4.5 GB RAM or
+  less carry a warning.
+* Four small GGUF chat models, each pinned to a verified Hugging Face commit
+  and **one** quantised file: Gemma 3 270M (Q4_K_M, ~253 MB), SmolLM2 360M
+  (Q8_0, ~386 MB), Qwen2.5 0.5B (Q4_K_M, ~491 MB), Llama 3.2 1B (Q4_K_M,
+  ~808 MB). Gemma and Llama have their own licence terms (noted per entry).
+  With `llama-cpp-python` installed, `modelwidget/adapters/llama_cpp.py`
+  loads the file through `modelwidget/gguf.py`, `MODEL_FILE` names it in
+  `config/.env`, and `ModelService` fetches only that file if it is missing
+  (`paths.ensure_file`).
+* See the README section "Downloading models" for the CLI and
+  troubleshooting (MODEL_WEIGHTS, HF_HUB_OFFLINE, disk space, proxies).
 
 ## Roadmap
 
 1. Fix the UI bugs Robin found in the model picker page (see Known issues).
 2. Map viewer follow-ups: labels and a proper style for OS Open Zoomstack /
    OpenMapTiles packs, search by place name, GPS position, offline routing.
-3. Wire the llama.cpp GGUF backend: single-file download, adapter, then flip
-   the planned entries to `available`.
+3. Chat-style page for the GGUF models (history, system prompt, streaming).
 4. Render Markdown guides (small vendored or stdlib renderer); real guides
    with cited sources.
 5. Video thumbnails (ffmpeg optional) and a nicer browse-by-topic page.
@@ -207,7 +227,13 @@ The existing picker is extended, not replaced:
 
 * **UI bugs in the model picker page** (from the merged PR #2) were seen by
   Robin in the browser and are **not fixed yet**; this structure work leaves
-  that page as it was apart from the shared navigation bar.
+  that page as it was apart from the shared navigation bar. The picker now
+  has bare Download / Use buttons and a progress line per model.
+* Download jobs live in memory: restarting the app forgets their history
+  (files on disk are still detected). There is no cancel button yet; stop the
+  app to stop a download. With huggingface_hub 2.x an interrupted file
+  restarts from zero (Xet transfers do not resume); partial leftovers are
+  cleaned on the next attempt.
 * The new section pages are deliberately bare (plain lists, raw-text guides).
 * The map viewer is bare: one pack at a time, no place search, and the
   generic style for non-Protomaps vector packs has no labels.

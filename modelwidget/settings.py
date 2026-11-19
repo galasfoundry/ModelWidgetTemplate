@@ -69,6 +69,8 @@ class Settings:
     torch_num_threads: int | None
     weights_dir: Path
     label_map_path: Path | None
+    # One file inside the snapshot to load (GGUF models). Empty for whole snapshots.
+    model_file: str = ""
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -105,4 +107,5 @@ class Settings:
             torch_num_threads=threads,
             weights_dir=resolve_path("WEIGHTS_DIR", PROJECT_ROOT / "weights"),
             label_map_path=resolve_path("LABEL_MAP_PATH", Path()) if label_raw else None,
+            model_file=_raw("MODEL_FILE"),
         )

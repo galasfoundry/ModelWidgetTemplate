@@ -1,17 +1,12 @@
-"""Planned llama.cpp backend for small quantised GGUF language models. STUB.
+"""llama.cpp backend for small quantised GGUF language models.
 
-Catalog entries with ``"backend": "llama_cpp"`` and ``"status": "planned"``
-pin one ``gguf_file`` at a Hugging Face commit. They are listed by
-``GET /api/models`` under ``planned`` and are never installed by the picker.
-
-Wiring this in later means:
-
-1. ``pip install llama-cpp-python`` (see requirements-optional.txt; it builds
-   llama.cpp, so it is optional and CPU-only by default).
-2. Download just the one GGUF file with ``hf_hub_download(repo_id, filename=
-   gguf_file, revision=..., cache_dir=weights/)`` instead of a whole snapshot.
-3. Register a text-generation adapter for backend ``llama_cpp`` built on
-   :class:`GGUFTextGenerator`, then flip the entries to ``"available"``.
+Catalog entries with ``"backend": "llama_cpp"`` and ``"status":
+"downloadable"`` pin one ``gguf_file`` at a Hugging Face commit. The picker
+and ``scripts/download_models.py`` download just that file into
+``weights/``. Using the model needs ``pip install llama-cpp-python`` (see
+requirements-optional.txt); the adapter in
+``modelwidget/adapters/llama_cpp.py`` then loads it through
+:class:`GGUFTextGenerator`.
 
 On a 4 GB laptop keep ``n_ctx`` small (1024-2048) and ``n_threads`` at 2-4;
 a Q4 1B model needs roughly 1 GB of RAM while running.

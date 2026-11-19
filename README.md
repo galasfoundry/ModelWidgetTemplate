@@ -126,6 +126,67 @@ Presets with pinned revisions are commented in `config/.env.example`:
 
 The third shape is the woodsapp app-config object. Descriptions are returned on each result row and shown under the label.
 
+## Downloading models
+
+Models download from Hugging Face **into this project's `weights/` folder**
+(`weights/models--<org>--<name>/snapshots/<revision>/`), once, while online.
+After that the app uses them with no internet. Nothing downloads at start-up:
+until you download a model (or run a first prediction), `weights/` stays empty.
+
+**Easiest on a laptop: the command line.**
+
+```bash
+python scripts/download_models.py --list                  # catalog, sizes, what is on disk
+python scripts/download_models.py mobilenetv3-small gemma-3-270m-it-gguf
+python scripts/download_models.py --all --dry-run         # what --all would fetch
+python scripts/download_models.py --all                   # everything that fits this machine
+```
+
+It shows progress, skips anything already on disk without going online, and
+can simply be run again after an interruption. GGUF chat models fetch **one**
+quantised file (e.g. `gemma-3-270m-it-Q4_K_M.gguf`, ~253 MB), not the whole
+repo.
+
+**From the page.** Each model under **Models** has a **Download** button. The
+download runs in the background (one at a time); its progress shows under the
+model and nothing else is blocked. When it is on disk, **Use this model**
+switches to it. The same thing over HTTP:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/models/gemma-3-270m-it-gguf/download   # 202, starts a job
+curl http://127.0.0.1:5000/api/models/gemma-3-270m-it-gguf/status             # queued/downloading/done/error, bytes, %
+curl http://127.0.0.1:5000/api/models/downloads                               # every job
+```
+
+**Chat models (GGUF).** Catalog entries with `"status": "downloadable"` and
+`"backend": "llama_cpp"` (Gemma 3 270M, SmolLM2 360M, Qwen2.5 0.5B, Llama 3.2
+1B) always download. Using them needs llama.cpp's Python binding; a prebuilt
+CPU wheel avoids compiling:
+
+```bash
+pip install llama-cpp-python --prefer-binary \
+  --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+```
+
+Then **Use this model** works and `config/.env` gets `MODEL_FILE=<the .gguf>`
+alongside the other `MODEL_*` keys. `MAX_NEW_TOKENS` (default 40) sets the
+reply length; `LLAMA_N_CTX` (default 2048) the context. On a 4 GB laptop the
+270M-500M models are comfortable; Llama 3.2 1B (~808 MB) works but shows a
+warning: close other apps first.
+
+### Troubleshooting downloads
+
+| Symptom | Cause and fix |
+| --- | --- |
+| "HF_HUB_OFFLINE is set" | `HF_HUB_OFFLINE=1` (or `TRANSFORMERS_OFFLINE=1`) blocks all downloads. Unset it while downloading; set it again afterwards if you like. |
+| "MODEL_WEIGHTS is set, so switching is turned off" | `MODEL_WEIGHTS` in the shell, `config/.env` or `.env` pins one checkpoint. Downloads still work; remove it to switch models. |
+| "Not enough disk space" | The download needs its size plus 10% free in `weights/`. Free space, or move `weights/` with `WEIGHTS_DIR=/path/on/bigger/disk`. |
+| "check the internet connection" | No network, DNS, or a proxy. Behind a proxy, export `HTTPS_PROXY=http://host:port` before starting the app or the script. |
+| Download stopped half-way | Run it again. Leftover `*.incomplete` files older than a minute are removed first. With huggingface_hub 2.x the interrupted file restarts from zero (its Xet transfer does not resume a file), but finished files are kept. |
+| "401/403" or "gated" | That repo needs a Hugging Face account token: put `HF_TOKEN=...` in `config/.env`. The shipped catalog only uses public repos. |
+| GGUF model "cannot run here: backend 'llama_cpp' is not installed" | Install `llama-cpp-python` as above. The file is already downloaded. |
+| Files also in `~/.cache/huggingface` | Earlier versions or other tools may have used the global cache. This app reads both but downloads only into `weights/`. |
+
 ## Pick a model from the page
 
 `config/models_catalog.json` is a small offline catalog of public models that fit a low-resource machine (set `MODELS_CATALOG_PATH` to use another file). The page lists the ones this machine can run under **Models**, and `GET /api/models` returns the same data.
@@ -134,16 +195,16 @@ Each entry is checked against this machine before it is offered:
 
 - `min_ram_gb` against total RAM (10% slack, since a "2 GB" machine reports a little under 2 GiB),
 - `approx_size_mb` against free disk at `weights/` (twice the size, skipped when the snapshot is already there),
-- the backend (`timm` or `transformers`) is importable and an adapter is registered for the task.
+- the backend (`timm`, `transformers` or `llama_cpp`) is importable and an adapter is registered for the task. A missing backend only stops *using* a model; it can still be downloaded.
 
 RAM and disk come from `psutil` when it is installed (`pip install -r requirements-optional.txt`). Without it, Linux reads `/proc/meminfo` and disk space comes from `shutil.disk_usage`. CUDA is reported from `torch.cuda.is_available()`.
 
 Choosing a model (`POST /api/models/select` with `{"id": "<catalog id>"}`):
 
 1. reuses the exact pinned snapshot when it is already under `weights/` or in the Hugging Face cache, so it works with no network,
-2. otherwise downloads it with the same code path as `install_weights.py`,
+2. otherwise downloads it first (the page offers **Download** separately, see [Downloading models](#downloading-models); select refuses with 409 while that model's background download is still running),
 3. loads it in a fresh `ModelService` and switches the page and `/api/predict` to it,
-4. writes `MODEL_ID`, `MODEL_REVISION`, `MODEL_TASK` and `MODEL_BACKEND` to `config/.env` (other lines are kept), so the next start uses the same model.
+4. writes `MODEL_ID`, `MODEL_REVISION`, `MODEL_TASK`, `MODEL_BACKEND` and `MODEL_FILE` (GGUF only, otherwise empty) to `config/.env` (other lines are kept), so the next start uses the same model.
 
 If the download or the load fails, the error is shown, nothing is written, and the previous model stays active. Selection is turned off while `MODEL_WEIGHTS` is set. Shell exports still beat `config/.env`, and the response warns when one would.
 
@@ -154,6 +215,8 @@ If the download or the load fails, the error is shown, nothing is written, and t
 `GET /api/info` returns the configured repo, task, backend, device, dtype, and whether the module is loaded. The page uses this to choose an image input or a text input.
 
 `GET /api/models` returns the catalog filtered for this machine: `models` (can run here), `excluded` (with `reasons`), `capabilities`, `active`, and `installed` (catalog ids whose pinned snapshot is on disk).
+
+`POST /api/models/<id>/download` starts a background download into `weights/` and returns 202 with the job (200 if already on disk, 404 unknown id, 409 planned or too big for this machine). `GET /api/models/<id>/status` returns that job: `state` (`idle`, `queued`, `downloading`, `done`, `error`), `bytes_done`, `bytes_total`, `percent`, `current_file`, `message`, `error`, `installed`, `snapshot`. `GET /api/models/downloads` lists every job and how many are active. Rows in `GET /api/models` also carry `downloadable`, `warnings` and their `download` job.
 
 `POST /api/models/select` switches to a catalog model, as described above. Errors are 404 for an unknown id, 409 when it cannot run here or `MODEL_WEIGHTS` is set, 502 when it is missing and cannot be downloaded, and 500 when it will not load.
 

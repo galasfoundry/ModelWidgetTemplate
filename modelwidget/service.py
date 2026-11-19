@@ -15,7 +15,7 @@ import modelwidget.adapters  # noqa: F401  (registers adapter classes)
 from modelwidget.adapters.base import create_adapter, get_adapter_class
 from modelwidget.devices import resolve_device, resolve_dtype
 from modelwidget.settings import Settings
-from paths import ensure_weights
+from paths import ensure_file, ensure_weights
 
 
 class ModelService:
@@ -73,11 +73,20 @@ class ModelService:
     def _load_unlocked(self) -> None:
         if self._adapter is not None:
             return
-        snapshot = ensure_weights(
-            self.settings.model_id,
-            self.settings.model_revision,
-            self.settings.weights_dir,
-        )
+        if self.settings.model_file:
+            # Single-file models (GGUF): fetch only that file, never the whole repo.
+            snapshot = ensure_file(
+                self.settings.model_id,
+                self.settings.model_revision,
+                self.settings.model_file,
+                self.settings.weights_dir,
+            )
+        else:
+            snapshot = ensure_weights(
+                self.settings.model_id,
+                self.settings.model_revision,
+                self.settings.weights_dir,
+            )
         print(
             f"Loading {self.settings.model_id} ({self.settings.model_task}, "
             f"{self.settings.model_backend}) on {self.device} {self.dtype_name} from {snapshot}",
