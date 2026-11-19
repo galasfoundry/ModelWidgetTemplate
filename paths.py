@@ -349,6 +349,40 @@ def download_weights(repo_id: str, revision: str, weights_dir: Path | None = Non
     return snapshot
 
 
+def ensure_file(repo_id: str, revision: str, filename: str, weights_dir: Path | None = None) -> Path:
+    """Snapshot directory holding ``filename`` at ``revision``; downloads only that file.
+
+    Used for single-file models such as GGUF, where the repo holds many
+    quantisations and only one is wanted.
+    """
+    destination = WEIGHTS_DIR if weights_dir is None else Path(weights_dir)
+    for root in (destination, huggingface_hub_dir()):
+        names = {revision}
+        ref = _read_ref(root, repo_id, revision) if revision else None
+        if ref:
+            names.add(ref)
+        for name in names:
+            snapshot = root / model_dir_name(repo_id) / "snapshots" / name
+            if (snapshot / filename).is_file():
+                return snapshot.resolve()
+    destination.mkdir(parents=True, exist_ok=True)
+    pinned = resolve_revision(repo_id, revision)
+    print(f"Downloading {repo_id} {filename} (revision {pinned}) into {destination}", flush=True)
+    try:
+        from huggingface_hub import hf_hub_download
+    except ImportError as exc:
+        raise RuntimeError("huggingface_hub is required: pip install -r requirements.txt") from exc
+    try:
+        downloaded = hf_hub_download(
+            repo_id=repo_id, filename=filename, revision=pinned, cache_dir=str(destination)
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"Could not download {filename} from {repo_id} revision {pinned} into {destination}: {exc}"
+        ) from exc
+    return snapshot_from_download(Path(downloaded))
+
+
 def snapshot_from_download(downloaded: Path) -> Path:
     """Return the ``snapshots/<revision>/`` directory for an ``hf_hub_download`` path.
 

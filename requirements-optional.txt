@@ -4,7 +4,10 @@
 # Without it, Linux reads /proc/meminfo and other systems skip the RAM check.
 psutil>=5.9
 
-# Planned (not used yet): llama.cpp backend for small GGUF language models,
-# see modelwidget/gguf.py and the "planned" entries in config/models_catalog.json.
-# It compiles llama.cpp on install, so it stays commented out for now.
+# Optional: llama.cpp backend for the small GGUF chat models in
+# config/models_catalog.json (backend "llama_cpp"). The models download
+# without it; using them needs it. A prebuilt CPU wheel avoids compiling:
+#   pip install llama-cpp-python --prefer-binary \
+#     --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+# Tested with llama-cpp-python 0.3.36.
 # llama-cpp-python>=0.3

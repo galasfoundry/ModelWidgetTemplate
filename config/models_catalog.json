@@ -23,7 +23,7 @@
       "revision": "77f1b168e219585646439073245fe87e56b3023e",
       "task": "text-generation",
       "backend": "transformers",
-      "approx_size_mb": 5,
+      "approx_size_mb": 51,
       "min_ram_gb": 2,
       "description": "Tiny language model. Useful for simple local guidance, checklists, or story-style notes.",
       "theme_tags": ["text", "guidance", "lightweight"],
@@ -67,11 +67,11 @@
       "task": "text-generation",
       "backend": "llama_cpp",
       "category": "llm",
-      "status": "planned",
+      "status": "downloadable",
       "approx_size_mb": 253,
       "min_ram_gb": 2,
       "license": "gemma (Gemma Terms of Use)",
-      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "description": "Small chat model as one quantised GGUF file. Downloads any time; using it needs the optional llama-cpp-python (pip install llama-cpp-python).",
       "theme_tags": ["llm", "chat", "gguf", "offline"]
     },
     {
@@ -83,11 +83,11 @@
       "task": "text-generation",
       "backend": "llama_cpp",
       "category": "llm",
-      "status": "planned",
+      "status": "downloadable",
       "approx_size_mb": 386,
       "min_ram_gb": 2,
       "license": "apache-2.0",
-      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "description": "Small chat model as one quantised GGUF file. Downloads any time; using it needs the optional llama-cpp-python (pip install llama-cpp-python).",
       "theme_tags": ["llm", "chat", "gguf", "offline"]
     },
     {
@@ -99,11 +99,11 @@
       "task": "text-generation",
       "backend": "llama_cpp",
       "category": "llm",
-      "status": "planned",
+      "status": "downloadable",
       "approx_size_mb": 491,
       "min_ram_gb": 2,
       "license": "apache-2.0",
-      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "description": "Small chat model as one quantised GGUF file. Downloads any time; using it needs the optional llama-cpp-python (pip install llama-cpp-python).",
       "theme_tags": ["llm", "chat", "gguf", "offline"]
     },
     {
@@ -115,13 +115,13 @@
       "task": "text-generation",
       "backend": "llama_cpp",
       "category": "llm",
-      "status": "planned",
+      "status": "downloadable",
       "approx_size_mb": 808,
       "min_ram_gb": 4,
       "license": "llama3.2 (Llama 3.2 Community License)",
-      "description": "Planned: needs the llama.cpp backend (optional llama-cpp-python). Listed for the roadmap only; the picker will not install it yet.",
+      "description": "Small chat model as one quantised GGUF file. Downloads any time; using it needs the optional llama-cpp-python (pip install llama-cpp-python).",
       "theme_tags": ["llm", "chat", "gguf", "offline"]
     }
   ],
-  "notes": "category: vision | text | llm | audio | other. status: available (installable) or planned (roadmap only, never installed). GGUF entries pin one quantised file via gguf_file at a verified Hugging Face commit."
+  "notes": "category: vision | text | llm | audio | other. status: available (download + use), downloadable (download any time; use needs its backend, e.g. llama-cpp-python for GGUF) or planned (listed only). GGUF entries pin one quantised file via gguf_file at a verified Hugging Face commit; only that file is downloaded."
 }

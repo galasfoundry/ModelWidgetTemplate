@@ -35,17 +35,23 @@ CATALOG_PATH = paths.PROJECT_ROOT / "config" / "models_catalog.json"
 OVERRIDE_ENV_PATH = paths.PROJECT_ROOT / "config" / ".env"
 
 REQUIRED_FIELDS = ("id", "name", "hf_id", "revision", "task", "backend")
-# "available" entries can be installed from the picker. "planned" entries are
-# listed for the roadmap (for example GGUF models for a llama.cpp backend) and
-# are never offered for install until their backend is supported.
-STATUSES = ("available", "planned")
+# "available": download and activate from the picker.
+# "downloadable": download any time; activate only when its backend is
+#   installed (GGUF models need the optional llama-cpp-python).
+# "planned": listed for the roadmap only; never downloaded or activated.
+STATUSES = ("available", "downloadable", "planned")
 CATEGORIES = ("vision", "text", "llm", "audio", "other")
 SETTING_KEYS = {
     "MODEL_ID": "hf_id",
     "MODEL_REVISION": "revision",
     "MODEL_TASK": "task",
     "MODEL_BACKEND": "backend",
+    # Single-file models (GGUF). Written empty for whole-snapshot models.
+    "MODEL_FILE": "gguf_file",
 }
+# On a machine with this much RAM or less, big language models get a warning.
+SMALL_MACHINE_GB = 4.5
+BIG_LLM_MB = 700
 # A machine sold as "2 GB" reports a little under 2 GiB, so allow 10%.
 RAM_TOLERANCE = 0.9
 # Leave room for the download, the cache metadata, and anything else.
@@ -107,28 +113,44 @@ def load_catalog(path: Path | None = None) -> dict:
     }
 
 
-def installed_snapshot(repo_id: str, revision: str, weights_dir: Path) -> Path | None:
+def installed_snapshot(
+    repo_id: str, revision: str, weights_dir: Path, filename: str | None = None
+) -> Path | None:
     """The exact pinned snapshot on disk, or None. Never downloads.
 
     ``weights/`` is checked first, then the Hugging Face hub cache, the same
     pools ``paths.find_local_snapshot`` searches. Unlike that function, a
-    different revision of the same repo does not count.
+    different revision of the same repo does not count. With ``filename``
+    (a GGUF file) the snapshot only counts when that file is in it.
     """
     for root in (Path(weights_dir), paths.huggingface_hub_dir()):
         names = {revision}
         ref = paths._read_ref(root, repo_id, revision)
         if ref:
             names.add(ref)
+        if filename:
+            for name in names:
+                snapshot = root / paths.model_dir_name(repo_id) / "snapshots" / name
+                if (snapshot / filename).is_file():
+                    return snapshot.resolve()
+            continue
         for snapshot in paths._snapshot_dirs(root, repo_id):
             if snapshot.name in names:
                 return snapshot.resolve()
     return None
 
 
+def entry_snapshot(entry: dict, weights_dir: Path) -> Path | None:
+    return installed_snapshot(
+        entry["hf_id"], entry["revision"], weights_dir, filename=entry.get("gguf_file") or None
+    )
+
+
 def evaluate(entry: dict, caps: dict, weights_dir: Path) -> dict:
     """Return the entry plus ``compatible``, ``reasons`` and ``installed``."""
     reasons: list[str] = []
-    snapshot = installed_snapshot(entry["hf_id"], entry["revision"], weights_dir)
+    warnings: list[str] = []
+    snapshot = entry_snapshot(entry, weights_dir)
 
     min_ram = _number(entry.get("min_ram_gb"))
     total_ram = caps.get("ram_total_gb")
@@ -141,16 +163,38 @@ def evaluate(entry: dict, caps: dict, weights_dir: Path) -> dict:
         if free_mb < size_mb * DISK_HEADROOM:
             reasons.append(f"needs about {size_mb:g} MB free disk, {free_mb:.0f} MB free")
 
+    # RAM and disk limits stop downloads too; a missing backend only stops activation.
+    download_blockers = list(reasons)
+    status = entry.get("status", "available")
+    if status == "planned":
+        download_blockers.append("planned: not downloadable yet")
+
     backend = entry["backend"]
     if caps.get("backends", {}).get(backend) is False:
-        reasons.append(f"backend {backend!r} is not installed (pip install {backend})")
+        package = PIP_NAMES.get(backend, backend)
+        reasons.append(f"backend {backend!r} is not installed (pip install {package}); downloading still works")
     try:
         get_adapter_class(entry["task"], backend)
     except ValueError:
         reasons.append(f"no adapter for {entry['task']} via {backend}")
+    if status == "planned":
+        reasons.append("planned: not supported yet")
+
+    if (
+        category_of(entry) == "llm"
+        and size_mb is not None
+        and size_mb >= BIG_LLM_MB
+        and total_ram is not None
+        and total_ram <= SMALL_MACHINE_GB
+    ):
+        warnings.append(
+            f"about {size_mb:g} MB on a {total_ram:.1f} GB machine: close other apps before using it"
+        )
 
     result = dict(entry)
     result["category"] = category_of(entry)
+    result["downloadable"] = not download_blockers
+    result["warnings"] = warnings
     result["compatible"] = not reasons
     result["reasons"] = reasons
     result["installed"] = snapshot is not None
@@ -164,6 +208,9 @@ def _number(value) -> float | None:
     if isinstance(value, (int, float)):
         return float(value)
     return None
+
+
+PIP_NAMES = {"llama_cpp": "llama-cpp-python"}
 
 
 def category_of(entry: dict) -> str:
@@ -187,6 +234,7 @@ def is_active(entry: dict, settings: Settings) -> bool:
         and entry["revision"] == settings.model_revision
         and entry["task"] == settings.model_task
         and entry["backend"] == settings.model_backend
+        and (entry.get("gguf_file") or "") == (getattr(settings, "model_file", "") or "")
     )
 
 
@@ -197,16 +245,22 @@ def settings_for(entry: dict, base: Settings) -> Settings:
         model_revision=entry["revision"],
         model_task=entry["task"],
         model_backend=entry["backend"],
+        model_file=entry.get("gguf_file") or "",
     )
 
 
 def install(entry: dict, weights_dir: Path) -> tuple[Path, bool]:
     """Return (snapshot, downloaded). Downloads only when the pinned snapshot is missing."""
-    found = installed_snapshot(entry["hf_id"], entry["revision"], weights_dir)
+    found = entry_snapshot(entry, weights_dir)
     if found is not None:
         return found, False
     try:
-        snapshot = paths.download_weights(entry["hf_id"], entry["revision"], weights_dir)
+        if entry.get("gguf_file"):
+            from modelwidget.downloads import download_entry
+
+            snapshot, _ = download_entry(entry, weights_dir)
+        else:
+            snapshot = paths.download_weights(entry["hf_id"], entry["revision"], weights_dir)
     except Exception as exc:
         raise SelectionError(
             f"{entry['name']} is not on this machine yet and could not be downloaded. "
