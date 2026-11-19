@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from flask import Blueprint, abort, jsonify, render_template, request, send_file
+from flask import Blueprint, Response, abort, jsonify, render_template, request, send_file
 
 from firstbook import guides, maps, videos
 from firstbook.library import Library, safe_child
@@ -33,10 +33,15 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
         items = videos.index(library.videos_dir)
         q = request.args.get("q", "")
         topic = request.args.get("topic", "")
+        results = sorted(
+            videos.search(items, q, topic),
+            key=lambda v: (v["topic"], v["title"].lower(), v["file"]),
+        )
         return render_template(
             "videos.html",
-            videos=videos.search(items, q, topic),
+            videos=results,
             topics=videos.topics_present(items),
+            topic_names=videos.TOPIC_NAMES,
             q=q,
             topic=topic,
         )
@@ -118,6 +123,18 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
             abort(404)
         mimetype = videos.MIMETYPES.get(path.suffix.lower(), "application/octet-stream")
         return send_file(path, mimetype=mimetype, conditional=True)
+
+    @bp.get("/videos/subtitles/<path:rel>")
+    def video_subtitles(rel: str):
+        path = safe_child(library.videos_dir, rel)
+        if path is None or not path.is_file() or path.suffix.lower() not in {".srt", ".vtt"}:
+            abort(404)
+        if path.suffix.lower() == ".vtt":
+            return send_file(path, mimetype="text/vtt; charset=utf-8")
+        return Response(
+            videos.srt_to_vtt(path.read_text(encoding="utf-8")),
+            mimetype="text/vtt; charset=utf-8",
+        )
 
     # ---- guides ------------------------------------------------------------
     @bp.get("/api/guides")

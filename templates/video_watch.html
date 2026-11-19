@@ -4,8 +4,20 @@
 <h1>{{ video.title }}</h1>
 <video controls preload="metadata" width="100%">
   <source src="{{ url_for('firstbook.video_file', rel=video.id) }}" type="{{ video.mimetype }}">
+  {% if video.subtitles_url %}
+  <track kind="subtitles" src="{{ video.subtitles_url }}" srclang="en" label="English" default>
+  {% endif %}
 </video>
 <p class="meta">{{ video.topic }}{% if video.tags %} · {{ video.tags|join(", ") }}{% endif %}</p>
 {% if video.description %}<p>{{ video.description }}</p>{% endif %}
-{% if video.source or video.license %}<p class="meta">{{ video.source }} {{ video.license }}</p>{% endif %}
+{% if video.attribution %}
+<p class="attribution">Credit:
+  {% if video.source.startswith("http") %}<a href="{{ video.source }}">“{{ video.title }}”</a>{% else %}“{{ video.title }}”{% endif %}
+  by
+  {% if video.creator_url %}<a href="{{ video.creator_url }}">{{ video.creator }}</a>{% else %}{{ video.creator }}{% endif %},
+  licensed under {% if video.license_url %}<a href="{{ video.license_url }}">{{ video.license }}</a>{% else %}{{ video.license }}{% endif %}.
+  {% if video.source.startswith("http") %}Stored at reduced resolution for offline use; no other changes.{% endif %}
+</p>
+{% elif video.source or video.license %}<p class="meta">{{ video.source }} {{ video.license }}</p>{% endif %}
+{% if video.fact_check %}<p class="meta">{{ video.fact_check }}</p>{% endif %}
 {% endblock %}
