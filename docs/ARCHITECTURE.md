@@ -6,12 +6,14 @@ tools, 3D printing…), short guides, and small local AI models. It grows out
 of this model widget template and is built for a 4 GB RAM laptop.
 
 The guiding rule: **after setup, nothing touches the network.** The
-exceptions are explicit, user-started downloads: the model download when
-you pick a model that is not on disk yet (`POST /api/models/select`), and
-**Download library** on `/videos`, which fetches a remote manifest and
-selected video files. Map packs can still be copied in by hand or fetched
-once by `scripts/fetch_demo_map.py`. `scripts/fetch_videos.py` (yt-dlp)
-remains a fallback for the third-party Creative Commons catalog.
+exceptions are explicit, user-started actions: a model download
+(`POST /api/models/select` or `POST /api/models/<id>/download`), an
+explicit Hugging Face search from Discover (`GET /api/models/discover`),
+and **Download library** on `/videos`, which fetches a remote manifest and
+selected video files. Search results are cached on disk so a previous
+search still shows offline. Map packs can still be copied in by hand or
+fetched once by `scripts/fetch_demo_map.py`. `scripts/fetch_videos.py`
+(yt-dlp) remains a fallback for the third-party Creative Commons catalog.
 
 ## Code layout
 
@@ -23,14 +25,18 @@ firstbook/maps.py           map pack listing, MBTiles tile reads (stdlib sqlite3
 firstbook/videos.py         video index from videos.json + sidecars, search, topics
 firstbook/remote_library.py remote manifest, Download library, sha256, resume
 firstbook/guides.py         Markdown/text guides, keyword search
-firstbook/web.py            routes for /home, /maps, /videos, /guides and /api/status
+firstbook/chat.py           First Book chat prompt, history trim and status messages
+firstbook/web.py            routes for /home, /maps, /videos, /guides, /chat and /api/status
 modelwidget/catalog.py      model catalog (category, status), filtering, install-if-missing
+modelwidget/discover.py     Hugging Face GGUF search, fit labels, user catalog, disk cache
 modelwidget/capabilities.py RAM, disk, CUDA, backends (incl. optional llama_cpp)
 modelwidget/downloads.py    background download jobs, progress, single-file GGUF fetch
 modelwidget/gguf.py         llama.cpp wrapper for GGUF models (optional llama-cpp-python)
 modelwidget/adapters/llama_cpp.py  text-generation adapter for GGUF
 scripts/download_models.py  CLI: list and download catalog models into weights/
-config/models_catalog.json  model catalog
+scripts/discover_models.py  CLI: search Hugging Face for GGUF models that fit this machine
+config/models_catalog.json  curated model catalog
+config/models_user.json     user-added discovery picks (gitignored)
 config/maps_catalog.json    known UK map packs, sources and licences
 config/videos_catalog.json  Creative Commons (CC BY) videos with credits
 scripts/fetch_videos.py     fallback YouTube fetch of the catalog videos (yt-dlp)
@@ -74,7 +80,12 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /api/videos/library`, `POST …/check`, `POST …/download`, `GET …/status` | Remote library manifest, compare, download with progress |
 | `GET /guides`, `GET /api/guides?q=` | List and search guides |
 | `GET /guides/<slug>`, `GET /api/guides/<slug>` | One guide |
-| `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately) |
+| `GET /chat`, `GET /api/chat/status` | Offline GGUF chat page and readiness |
+| `POST /api/chat` | Stream a chat reply (SSE). Body: `{ "messages": [...] }` |
+| `POST /api/chat/stop` | Stop the current chat reply |
+| `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately; user picks have `source: user`) |
+| `GET /api/models/discover?q=&task=chat` | Search Hugging Face for GGUF chat models that fit this machine; cached for offline use |
+| `POST /api/models/discover/add`, `POST /api/models/discover/remove` | Write or drop a pick in `config/models_user.json` (never the curated catalog) |
 | `POST /api/models/<id>/download`, `GET /api/models/<id>/status`, `GET /api/models/downloads` | Background downloads into `weights/` with progress |
 
 ## Maps
@@ -203,8 +214,9 @@ committed. The seven take about 290 MB at 360p (about 500 MB at
 Animated explainers made for The First Book go in `library/videos/originals/`.
 They are CC BY 4.0, credited to The First Book / galasfoundry, and fact-checked
 by Murder. The `<video>.json` sidecar and `.srt` subtitles are committed; the
-`.mp4` is not. Copy `001-head-and-flow.mp4` (about 6.7 MB, 720p) next to the
-shipped sidecar and subtitles and it appears on `/videos` under Power. The
+`.mp4` is not. Copy `001-head-and-flow.mp4` (about 6.7 MB, 720p) and
+`002-watts-vs-watt-hours.mp4` (about 6.4 MB, 720p) next to the shipped
+sidecars and subtitles and they appear on `/videos` under Power. The
 watch page shows the credit line (without the "reduced resolution" note used
 for the YouTube copies) and serves the `.srt` as WebVTT on
 `/videos/subtitles/...` for a `<track>` element.
@@ -268,6 +280,15 @@ The picker is extended, not replaced:
   loads the file through `modelwidget/gguf.py`, `MODEL_FILE` names it in
   `config/.env`, and `ModelService` fetches only that file if it is missing
   (`paths.ensure_file`).
+* `/chat` is a bare streaming chat page for those GGUF models. It sends
+  `POST /api/chat` (SSE) with the session history, a short First Book system
+  prompt, and `CHAT_MAX_TOKENS` (default 384). The model's GGUF chat template
+  is applied. History is trimmed to fit `LLAMA_N_CTX` (default 2048). Stop
+  (`POST /api/chat/stop`) and Clear are on the page. `/api/predict` is
+  unchanged and still uses `MAX_NEW_TOKENS` (40). If llama-cpp-python is
+  missing or no chat model is downloaded and selected, the page shows a
+  short message, the install command from `requirements-optional.txt`, and a
+  link to the model page, and does not crash.
 * See the README section "Downloading models" for the CLI and
   troubleshooting (MODEL_WEIGHTS, HF_HUB_OFFLINE, disk space, proxies).
 
@@ -276,7 +297,7 @@ The picker is extended, not replaced:
 1. Fix the UI bugs Robin found in the model picker page (see Known issues).
 2. Map viewer follow-ups: labels and a proper style for OS Open Zoomstack /
    OpenMapTiles packs, search by place name, GPS position, offline routing.
-3. Chat-style page for the GGUF models (history, system prompt, streaming).
+3. Chat-style page for the GGUF models: done (`/chat`, streaming, history, system prompt).
 4. Render Markdown guides (small vendored or stdlib renderer); real guides
    with cited sources.
 5. Video thumbnails (ffmpeg optional) and a nicer browse-by-topic page.

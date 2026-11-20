@@ -18,6 +18,10 @@ from modelwidget.settings import Settings
 from paths import ensure_file, ensure_weights
 
 
+class ModelBusy(RuntimeError):
+    """The one loaded model is already answering a request."""
+
+
 class ModelService:
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -69,6 +73,33 @@ class ModelService:
         payload = self.info()
         payload.update(body)
         return payload
+
+    def can_chat(self) -> bool:
+        return self.settings.model_backend == "llama_cpp" and self.settings.model_task == "text-generation"
+
+    def token_counter(self):
+        """The loaded adapter's token counter. Call ensure_loaded first."""
+        if self._adapter is None or not hasattr(self._adapter, "count_tokens"):
+            raise RuntimeError("The GGUF model is not loaded.")
+        return self._adapter.count_tokens
+
+    def stream_chat(self, messages: list[dict], stop_event=None, max_tokens: int | None = None):
+        """Yield reply text deltas. One chat at a time; shares the load lock with predict."""
+        if not self.can_chat():
+            raise ValueError("The active model is not a GGUF chat model.")
+        if not self._lock.acquire(blocking=False):
+            raise ModelBusy("The model is already answering another request.")
+        try:
+            self._load_unlocked()
+            assert self._adapter is not None
+            if not hasattr(self._adapter, "stream_chat"):
+                raise ValueError("The active model is not a GGUF chat model.")
+            tokens = max_tokens if max_tokens is not None else int(
+                getattr(self.settings, "chat_max_tokens", 384)
+            )
+            yield from self._adapter.stream_chat(messages, max_tokens=tokens, stop_event=stop_event)
+        finally:
+            self._lock.release()
 
     def _load_unlocked(self) -> None:
         if self._adapter is not None:

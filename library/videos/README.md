@@ -76,15 +76,16 @@ own work, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
 credited to The First Book / galasfoundry, and fact-checked by Murder before
 they go into the library.
 
-The sidecar (`originals/001-head-and-flow.mp4.json`) and subtitles
-(`originals/001-head-and-flow.srt`) are in git. The video file is not
-(episode 001 is about 6.7 MB at 720p). Copy it into place:
+The sidecars and subtitles are in git. The video files are not
+(episode 001 is about 6.7 MB at 720p; episode 002 is about 6.4 MB). Copy
+them into place:
 
 ```bash
 mkdir -p library/videos/originals
 cp /path/to/001-head-and-flow.mp4 library/videos/originals/
+cp /path/to/002-watts-vs-watt-hours.mp4 library/videos/originals/
 ```
 
-It then appears on `/videos` under Power, with the credit line and
-subtitles. Later episodes use the same layout: `originals/<id>-<slug>.mp4`
+Each then appears on `/videos` under Power, with the credit line and
+subtitles. Episodes use the same layout: `originals/<id>-<slug>.mp4`
 plus a `<file>.json` sidecar and an optional `.srt`.

@@ -60,8 +60,8 @@ def _fake_snapshot(weights_dir: Path, entry: dict) -> Path:
 
 def test_shipped_catalog_loads():
     data = catalog.load_catalog(catalog.CATALOG_PATH)
-    ids = [m["id"] for m in data["models"]]
-    assert ids == [
+    curated = [m["id"] for m in data["models"] if m.get("source") != "user"]
+    assert curated == [
         "mobilenetv3-small", "tinystories-1m", "bedrock-sentiment-tiny", "mobilenetv2",
         "gemma-3-270m-it-gguf", "smollm2-360m-instruct-gguf",
         "qwen2.5-0.5b-instruct-gguf", "llama-3.2-1b-instruct-gguf",
