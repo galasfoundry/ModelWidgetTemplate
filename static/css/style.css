@@ -239,3 +239,47 @@ ol.scores li:first-child {
 .fb-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .guide-text { white-space: pre-wrap; }
 .fb-map { width: 100%; height: 70vh; min-height: 320px; border: 1px solid #ccc; }
+
+
+/* Remote video library on /videos. */
+.remote-library {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem 1rem 1.1rem;
+  margin: 0 0 1.25rem;
+}
+.remote-library h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+.remote-library button {
+  margin-top: 0.6rem;
+  margin-right: 0.5rem;
+}
+.library-list {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+}
+.library-list li {
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--line);
+}
+.library-list li:first-child {
+  border-top: 0;
+}
+.library-list label {
+  font-weight: 400;
+  margin: 0;
+}
+.library-error {
+  color: #8a1f1f;
+  margin: 0.5rem 0;
+}
+#library-bar {
+  margin-top: 0.5rem;
+}
+#library-bar span {
+  min-width: 0;
+}

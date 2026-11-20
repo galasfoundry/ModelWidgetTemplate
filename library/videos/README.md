@@ -16,6 +16,18 @@ their filename. Durations are filled in when `ffprobe` is installed.
 Only add videos you are allowed to keep a copy of, and record the source and
 licence.
 
+## Remote library (primary path)
+
+The usual way to fill this folder, once a host is configured, is the
+**Download library** button on `/videos`. It fetches a versioned manifest
+from `FIRSTBOOK_LIBRARY_URL` (default: a GitHub Releases placeholder under
+galasfoundry, not a live host), shows what is new or updated, and
+downloads the files with resume and sha256 checks. Already-present videos
+keep playing offline. See [docs/REMOTE_VIDEO_LIBRARY.md](../../docs/REMOTE_VIDEO_LIBRARY.md)
+for the manifest schema, how to publish with
+`python scripts/build_video_manifest.py --remote`, and hosting on GitHub
+Releases, the Internet Archive, or your own server.
+
 ## Creative Commons starter set
 
 `config/videos_catalog.json` lists videos that may be kept offline because

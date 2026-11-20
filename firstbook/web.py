@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Callable
 
-from flask import Blueprint, Response, abort, jsonify, render_template, request, send_file
+from flask import Blueprint, Response, abort, current_app, jsonify, render_template, request, send_file
 
-from firstbook import guides, maps, videos
+from firstbook import guides, maps, remote_library, videos
 from firstbook.library import Library, safe_child
 from modelwidget import catalog
 from modelwidget.capabilities import detect_capabilities
@@ -44,6 +44,7 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
             topic_names=videos.TOPIC_NAMES,
             q=q,
             topic=topic,
+            library=_library_status(),
         )
 
     @bp.get("/videos/watch/<path:rel>")
@@ -136,6 +137,51 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
             mimetype="text/vtt; charset=utf-8",
         )
 
+    @bp.get("/api/videos/library")
+    def api_videos_library():
+        # Offline-safe: last check time and whatever is already on disk.
+        body = _library_status()
+        cached = remote_library.load_cached_manifest(library.videos_dir)
+        body["comparison"] = (
+            remote_library.compare_manifest(cached, library.videos_dir) if cached else None
+        )
+        return jsonify(body)
+
+    @bp.post("/api/videos/library/check")
+    def api_videos_library_check():
+        result = remote_library.check_library(library.videos_dir)
+        body = _library_status()
+        body.update({
+            "ok": result["ok"],
+            "offline": result["offline"],
+            "error": result["error"],
+            "comparison": result["comparison"],
+        })
+        return jsonify(body), (200 if result["ok"] else 503)
+
+    @bp.post("/api/videos/library/download")
+    def api_videos_library_download():
+        payload = request.get_json(silent=True) or {}
+        manifest = remote_library.load_cached_manifest(library.videos_dir)
+        if manifest is None:
+            checked = remote_library.check_library(library.videos_dir)
+            if not checked["ok"]:
+                return jsonify({"ok": False, "error": checked["error"], "job": _library_downloads().snapshot()}), 503
+            manifest = checked["manifest"]
+        ids = payload.get("ids")
+        if isinstance(ids, list):
+            ids = [str(i) for i in ids]
+        else:
+            ids = None
+        all_pending = bool(payload.get("all")) or ids is None
+        started = _library_downloads().start(manifest, ids, all_pending=all_pending)
+        code = 200 if started["ok"] else 409
+        return jsonify(started), code
+
+    @bp.get("/api/videos/library/status")
+    def api_videos_library_status():
+        return jsonify(_library_downloads().snapshot())
+
     # ---- guides ------------------------------------------------------------
     @bp.get("/api/guides")
     def api_guides():
@@ -161,6 +207,16 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
     def _packs(cat: dict | None = None) -> list[dict]:
         return maps.list_packs(library.maps_dir, cat if cat is not None else _maps_catalog())
 
+    def _library_downloads() -> remote_library.LibraryDownloads:
+        mgr = current_app.config.get("VIDEO_LIBRARY")
+        if mgr is None:
+            mgr = remote_library.LibraryDownloads(library.videos_dir)
+            current_app.config["VIDEO_LIBRARY"] = mgr
+        return mgr
+
+    def _library_status() -> dict:
+        return remote_library.public_status(library.videos_dir, _library_downloads())
+
     def _status() -> dict:
         caps = detect_capabilities(library.weights_dir)
         video_items = videos.index(library.videos_dir)
@@ -174,7 +230,11 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
                 "count": len(packs),
                 "packs": [{k: p[k] for k in ("name", "kind", "size_mb", "title")} for p in packs],
             },
-            "videos": {"count": len(video_items), "topics": videos.topics_present(video_items)},
+            "videos": {
+                "count": len(video_items),
+                "topics": videos.topics_present(video_items),
+                "library": _library_status(),
+            },
             "guides": {
                 "count": len(guide_items),
                 "placeholders": sum(1 for g in guide_items if g["placeholder"]),

@@ -5,11 +5,13 @@ a practical "tech-hacky" video library (repair, electronics, power, radio,
 tools, 3D printing…), short guides, and small local AI models. It grows out
 of this model widget template and is built for a 4 GB RAM laptop.
 
-The guiding rule: **after setup, nothing touches the network.** The single
-exception is the explicit model download when you pick a model that is not
-on disk yet (`POST /api/models/select`). Map packs and videos are copied in
-by hand or fetched once by setup scripts (`scripts/fetch_demo_map.py`,
-`scripts/fetch_videos.py`).
+The guiding rule: **after setup, nothing touches the network.** The
+exceptions are explicit, user-started downloads: the model download when
+you pick a model that is not on disk yet (`POST /api/models/select`), and
+**Download library** on `/videos`, which fetches a remote manifest and
+selected video files. Map packs can still be copied in by hand or fetched
+once by `scripts/fetch_demo_map.py`. `scripts/fetch_videos.py` (yt-dlp)
+remains a fallback for the third-party Creative Commons catalog.
 
 ## Code layout
 
@@ -19,6 +21,7 @@ paths.py                    project-relative paths, env loading, weight cache se
 firstbook/library.py        data root and section folders (LIBRARY_DIR, MAPS_DIR, …)
 firstbook/maps.py           map pack listing, MBTiles tile reads (stdlib sqlite3)
 firstbook/videos.py         video index from videos.json + sidecars, search, topics
+firstbook/remote_library.py remote manifest, Download library, sha256, resume
 firstbook/guides.py         Markdown/text guides, keyword search
 firstbook/web.py            routes for /home, /maps, /videos, /guides and /api/status
 modelwidget/catalog.py      model catalog (category, status), filtering, install-if-missing
@@ -30,8 +33,8 @@ scripts/download_models.py  CLI: list and download catalog models into weights/
 config/models_catalog.json  model catalog
 config/maps_catalog.json    known UK map packs, sources and licences
 config/videos_catalog.json  Creative Commons (CC BY) videos with credits
-scripts/fetch_videos.py     setup-time download of the catalog videos (yt-dlp)
-scripts/build_video_manifest.py  scan a folder into videos.json (ffprobe optional)
+scripts/fetch_videos.py     fallback YouTube fetch of the catalog videos (yt-dlp)
+scripts/build_video_manifest.py  local videos.json, or --remote publishable manifest
 scripts/fetch_demo_map.py   setup-time UK map extracts from the Protomaps build
 static/js/maps.js           the /maps viewer
 static/vendor/              MapLibre GL JS, pmtiles.js, Protomaps style, glyphs, sprites
@@ -65,9 +68,10 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /maps`, `GET /api/maps` | Map packs on disk + known UK packs |
 | `GET /tiles/<pack>/<z>/<x>/<y>[.ext]` | One XYZ tile from `<pack>.mbtiles`; 204 when absent |
 | `GET /maps/files/<pack>.pmtiles` | Whole PMTiles file with HTTP Range |
-| `GET /videos`, `GET /api/videos?q=&topic=&tag=` | List and search videos |
+| `GET /videos`, `GET /api/videos?q=&topic=&tag=` | List and search videos; Download library button |
 | `GET /videos/watch/<path>` | Bare player page |
 | `GET /videos/file/<path>` | Stream a video with HTTP Range (206) |
+| `GET /api/videos/library`, `POST …/check`, `POST …/download`, `GET …/status` | Remote library manifest, compare, download with progress |
 | `GET /guides`, `GET /api/guides?q=` | List and search guides |
 | `GET /guides/<slug>`, `GET /api/guides/<slug>` | One guide |
 | `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately) |
@@ -204,6 +208,27 @@ shipped sidecar and subtitles and it appears on `/videos` under Power. The
 watch page shows the credit line (without the "reduced resolution" note used
 for the YouTube copies) and serves the `.srt` as WebVTT on
 `/videos/subtitles/...` for a `<track>` element.
+
+### Remote video library
+
+The primary way to add videos, once a host is configured, is the
+**Download library** button on `/videos`. It fetches a versioned
+`firstbook.library.v1` manifest from `FIRSTBOOK_LIBRARY_URL` (or a local
+file / URL in `FIRSTBOOK_LIBRARY_MANIFEST`), shows what is new or
+updated, and streams selected files to `.part` files, verifies sha256,
+and renames them into `library/videos/` atomically. Interrupted downloads
+resume. Already-present files keep playing with no network. If the
+manifest cannot be reached, the page keeps working from disk and shows
+when the manifest was last checked.
+
+The default URL is a GitHub Releases **placeholder**
+(`…/releases/download/library-placeholder/`), not a live library. Point
+`FIRSTBOOK_LIBRARY_URL` at a real host when you have one. Publishing a
+new episode is: render the files, run
+`python scripts/build_video_manifest.py --remote --base-url URL -o manifest.json`,
+upload the files and the manifest. No app code change, and no videos in
+git. Hosting options (GitHub Releases, the Internet Archive, later a
+self-hosted server) are in `docs/REMOTE_VIDEO_LIBRARY.md`.
 
 ## Guides
 
