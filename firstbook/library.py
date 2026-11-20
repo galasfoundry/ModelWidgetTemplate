@@ -23,6 +23,7 @@ import paths
 
 DEFAULT_LIBRARY_DIR = paths.PROJECT_ROOT / "library"
 MAPS_CATALOG_PATH = paths.PROJECT_ROOT / "config" / "maps_catalog.json"
+VIDEOS_CATALOG_PATH = paths.PROJECT_ROOT / "config" / "videos_catalog.json"
 
 
 @dataclass(frozen=True)
