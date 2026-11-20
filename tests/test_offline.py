@@ -1,6 +1,10 @@
 """The First Book must run with no network: no CDN or remote URLs in pages,
 and no HTTP client imported by the content modules.
 
+The one exception is firstbook/remote_library.py, which is only called from
+the explicit Download library action on /videos. Listing and playback of
+videos already on disk stay offline.
+
 Third-party libraries under static/vendor/ are minified upstream builds whose
 source mentions URLs in comments and error messages; they only fetch what our
 code points them at. They are checked separately: every vendored file is
@@ -36,8 +40,13 @@ def test_templates_and_static_have_no_remote_urls():
 
 def test_content_modules_do_not_import_http_clients():
     banned = re.compile(r"^\s*(?:import|from)\s+(requests|httpx|urllib\.request|http\.client|aiohttp|socket)\b", re.M)
+    allowed = {ROOT / "firstbook" / "remote_library.py"}
     for path in (ROOT / "firstbook").rglob("*.py"):
-        assert not banned.search(path.read_text(encoding="utf-8")), path
+        text = path.read_text(encoding="utf-8")
+        if path.resolve() in {p.resolve() for p in allowed}:
+            assert banned.search(text), f"{path.name} is the Download library exception and should use stdlib urllib"
+            continue
+        assert not banned.search(text), path
 
 
 def test_vendored_libraries_are_local_and_licensed():

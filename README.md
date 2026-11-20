@@ -4,9 +4,12 @@
 > offline UK maps, how-to video, guides and local-model library for a 4 GB
 > laptop. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
 > look at, run `python scripts/fetch_demo_map.py` once while online, then open
-> http://127.0.0.1:5000/maps . For videos, `pip install yt-dlp` and run
-> `python scripts/fetch_videos.py` once (seven Creative Commons videos on
-> off-grid hydro, batteries and Starlink power, about 290 MB at 360p; credits in
+> http://127.0.0.1:5000/maps . For videos, use the Download library button
+> on http://127.0.0.1:5000/videos to fetch the remote catalog (the default
+> host is a placeholder; set `FIRSTBOOK_LIBRARY_URL`, see
+> [docs/REMOTE_VIDEO_LIBRARY.md](docs/REMOTE_VIDEO_LIBRARY.md)).
+> `python scripts/fetch_videos.py` remains a fallback for the seven Creative
+> Commons YouTube videos (`pip install yt-dlp`, about 290 MB at 360p; credits in
 > [library/videos/README.md](library/videos/README.md)). For the original
 > "Head and flow" and "Watts vs watt-hours" episodes, copy each `.mp4` into
 > `library/videos/originals/` (the sidecars and subtitles are already in the
@@ -352,11 +355,11 @@ modelwidget/adapters/       image and text adapters
 templates/index.html        upload or text form
 static/                     page styles and the fetch client
 weights/                    local snapshots, not committed
-firstbook/                  The First Book: library paths, maps, videos, guides, routes
+firstbook/                  The First Book: library paths, maps, videos, remote library, guides, routes
 config/maps_catalog.json    known UK map packs, sources and licences
-config/videos_catalog.json  Creative Commons videos with credits
+config/videos_catalog.json  Creative Commons videos with credits (yt-dlp fallback)
 modelwidget/gguf.py         llama.cpp backend for GGUF models (optional)
-scripts/                    download_models.py, fetch_demo_map.py, fetch_videos.py, build_video_manifest.py
+scripts/                    download_models.py, fetch_demo_map.py, fetch_videos.py, build_video_manifest.py (--remote)
 library/                    offline content: maps/, videos/, guides/
 docs/ARCHITECTURE.md        The First Book structure and roadmap
 ```

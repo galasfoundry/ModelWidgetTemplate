@@ -2,6 +2,35 @@
 {% block title %}Videos · The First Book{% endblock %}
 {% block content %}
 <h1>Videos</h1>
+<section id="remote-library" class="remote-library" data-placeholder="{{ '1' if library.placeholder else '0' }}">
+  <h2>Download library</h2>
+  <p id="library-checked" class="meta">
+    {% if library.last_checked %}
+      Remote manifest last checked {{ library.last_checked }}{% if library.last_checked_ok %} (ok){% else %} (failed){% endif %}.
+    {% else %}
+      The remote manifest has not been checked yet.
+    {% endif %}
+  </p>
+  <p id="library-host" class="meta">
+    Host: <code id="library-url">{{ library.display_url }}</code>{% if library.placeholder %} (placeholder, not a live library yet){% endif %}
+  </p>
+  {% if library.error and not library.last_checked_ok %}
+  <p id="library-error" class="library-error">{{ library.error }}</p>
+  {% else %}
+  <p id="library-error" class="library-error" hidden></p>
+  {% endif %}
+  <button type="button" id="download-library">Download library</button>
+  <div id="library-panel" hidden>
+    <p id="library-summary"></p>
+    <form id="library-form">
+      <ul id="library-list" class="library-list"></ul>
+      <button type="submit" id="library-download-selected">Download selected</button>
+      <button type="button" id="library-download-all">Download all new and updated</button>
+    </form>
+    <p id="library-progress" class="meta" hidden></p>
+    <div id="library-bar" class="bar" hidden><span style="width: 0%"></span></div>
+  </div>
+</section>
 <form method="get">
   <input name="q" value="{{ q }}" placeholder="Search videos">
   <select name="topic">
@@ -22,6 +51,9 @@
   {% endfor %}
 </div>
 {% else %}
-<p>No videos found. See <code>library/videos/README.md</code>.</p>
+<p>No videos found. See <code>library/videos/README.md</code>, or use Download library above.</p>
 {% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/videos.js') }}"></script>
 {% endblock %}
