@@ -170,7 +170,8 @@ def test_original_episode_sidecar_credits_and_subtitles(tmp_path):
     assert meta["creator"] == "The First Book / galasfoundry"
     assert meta["license"] == "CC BY 4.0" and videos.is_cc_by(meta["license"])
     assert meta["topic"] == "power" and meta["file"] == "originals/001-head-and-flow.mp4"
-    assert "Murder" in meta["fact_check"]
+    assert "Murder" in meta["fact_check"] and "19 Nov 2026" in meta["fact_check"]
+    assert "PASS WITH FIXES" in meta["fact_check"]
     assert "as long as it rains" in srt_path.read_text(encoding="utf-8")
 
     lib = make_library(tmp_path)
@@ -204,6 +205,51 @@ def test_original_episode_sidecar_credits_and_subtitles(tmp_path):
     assert client.get("/videos/subtitles/../README.md").status_code == 404
     assert client.get("/videos/subtitles/originals/nope.srt").status_code == 404
 
+
+
+def test_original_episode_002_sidecar_credits_and_subtitles(tmp_path):
+    """Shipped sidecar + srt describe episode 002; the mp4 is supplied at setup."""
+    from paths import PROJECT_ROOT
+
+    sidecar_path = PROJECT_ROOT / "library" / "videos" / "originals" / "002-watts-vs-watt-hours.mp4.json"
+    srt_path = PROJECT_ROOT / "library" / "videos" / "originals" / "002-watts-vs-watt-hours.srt"
+    meta = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert meta["creator"] == "The First Book / galasfoundry"
+    assert meta["license"] == "CC BY 4.0" and videos.is_cc_by(meta["license"])
+    assert meta["topic"] == "power" and meta["file"] == "originals/002-watts-vs-watt-hours.mp4"
+    assert meta["title"] == "Watts vs watt-hours: power, energy and your daily budget"
+    assert "Murder" in meta["fact_check"] and "20 Nov 2026" in meta["fact_check"]
+    assert "PASS WITH FIXES" in meta["fact_check"]
+    assert "A Starlink dish averages up to 100 watts," in srt_path.read_text(encoding="utf-8")
+
+    lib = make_library(tmp_path)
+    dest = lib.videos_dir / "originals"
+    dest.mkdir()
+    (dest / "002-watts-vs-watt-hours.mp4").write_bytes(b"\x00" * 2048)
+    (dest / "002-watts-vs-watt-hours.mp4.json").write_text(sidecar_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (dest / "002-watts-vs-watt-hours.srt").write_text(srt_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    items = {v["id"]: v for v in videos.index(lib.videos_dir)}
+    assert "originals/002-watts-vs-watt-hours.mp4" in items
+    item = items["originals/002-watts-vs-watt-hours.mp4"]
+    assert item["title"].startswith("Watts vs watt-hours")
+    assert item["creator"] == "The First Book / galasfoundry"
+    assert item["subtitles"] == "originals/002-watts-vs-watt-hours.srt"
+    assert item["subtitles_url"] == "/videos/subtitles/originals/002-watts-vs-watt-hours.srt"
+
+    client = create_app(image_settings(tmp_path), library=lib).test_client()
+    page = client.get("/videos").get_data(as_text=True)
+    assert "Watts vs watt-hours" in page and "The First Book / galasfoundry" in page
+    assert "Power" in page and "CC BY 4.0" in page
+    watch = client.get("/videos/watch/originals/002-watts-vs-watt-hours.mp4").get_data(as_text=True)
+    assert "Credit:" in watch and "creativecommons.org/licenses/by/4.0" in watch
+    assert "Fact-checked by Murder" in watch
+    assert "Stored at reduced resolution" not in watch
+    assert 'kind="subtitles"' in watch and item["subtitles_url"] in watch
+    sub = client.get(item["subtitles_url"])
+    assert sub.status_code == 200 and sub.mimetype == "text/vtt"
+    body = sub.get_data(as_text=True)
+    assert body.startswith("WEBVTT") and "A Starlink dish averages up to 100 watts," in body
 
 def test_srt_to_vtt_rewrites_timestamps():
     vtt = videos.srt_to_vtt("1\n00:00:00,500 --> 00:00:03,784\nHello\n")

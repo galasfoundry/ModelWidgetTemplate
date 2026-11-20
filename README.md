@@ -8,8 +8,9 @@
 > `python scripts/fetch_videos.py` once (seven Creative Commons videos on
 > off-grid hydro, batteries and Starlink power, about 290 MB at 360p; credits in
 > [library/videos/README.md](library/videos/README.md)). For the original
-> "Head and flow" episode, copy the `.mp4` into `library/videos/originals/`
-> (the sidecar and subtitles are already in the repo). Then open
+> "Head and flow" and "Watts vs watt-hours" episodes, copy each `.mp4` into
+> `library/videos/originals/` (the sidecars and subtitles are already in the
+> repo). Then open
 > http://127.0.0.1:5000/videos . Content goes
 > in `library/` (maps, videos, guides); see
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layout, routes, how to

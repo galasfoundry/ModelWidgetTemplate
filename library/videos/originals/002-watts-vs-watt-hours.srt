@@ -1,0 +1,121 @@
+1
+00:00:00,500 --> 00:00:04,945
+Watts and watt-hours. Power, energy, and
+your daily budget.
+
+2
+00:00:05,665 --> 00:00:08,865
+Watts are power: how fast energy flows,
+right now.
+
+3
+00:00:09,045 --> 00:00:12,158
+Watt-hours are energy: power, times how
+long it flows.
+
+4
+00:00:12,338 --> 00:00:15,125
+Like litres per second, and the litres in
+a bucket.
+
+5
+00:00:15,845 --> 00:00:23,744
+Our stream from episode one makes 245
+watts, day and night. Times 24 hours:
+
+6
+00:00:23,744 --> 00:00:25,534
+5,880 watt-hours.
+
+7
+00:00:25,714 --> 00:00:30,281
+A 400 watt solar panel, in full sun for 3
+hours, makes 1,200.
+
+8
+00:00:30,461 --> 00:00:33,808
+More watts, but about a fifth of the
+watt-hours.
+
+9
+00:00:33,808 --> 00:00:36,458
+A UK December day averages nearer 300.
+
+10
+00:00:38,578 --> 00:00:41,893
+List each load: its watts, times its hours
+a day.
+
+11
+00:00:42,073 --> 00:00:47,887
+A Starlink dish averages up to 100 watts,
+all day. 2,400 watt-hours.
+
+12
+00:00:48,067 --> 00:00:52,346
+A laptop uses 50 watts, for 4 hours. 200.
+
+13
+00:00:52,526 --> 00:00:58,405
+Four 10 watt LED lights, for 5 hours:
+another 200. Phone charging: about 20.
+
+14
+00:00:58,585 --> 00:01:04,606
+Total: about 2,820 watt-hours. Under half
+of what the stream makes.
+
+15
+00:01:06,526 --> 00:01:10,183
+Where do the other three thousand go? The
+stream never stops.
+
+16
+00:01:10,363 --> 00:01:13,915
+A controller sends the spare to a dump
+load: a heater for air or water.
+
+17
+00:01:15,235 --> 00:01:18,474
+The one rule: a hydro generator never runs
+without a load.
+
+18
+00:01:18,654 --> 00:01:22,049
+Lose the load, and it overspeeds, and the
+voltage spikes.
+
+19
+00:01:22,049 --> 00:01:27,052
+So the dump load stays connected, big
+enough to take everything the generator
+makes.
+
+20
+00:01:27,232 --> 00:01:29,669
+Shut the water off before you touch the
+wiring,
+
+21
+00:01:29,669 --> 00:01:31,847
+and have a qualified electrician check it.
+
+22
+00:01:33,567 --> 00:01:36,971
+Remember: watts, times hours, gives
+watt-hours.
+
+23
+00:01:37,151 --> 00:01:44,068
+245 watts, all day, is nearly 6
+kilowatt-hours. Keep your loads under what
+you make,
+
+24
+00:01:44,068 --> 00:01:48,515
+and, without a battery, under 245 watts at
+any moment.
+
+25
+00:01:49,235 --> 00:01:52,387
+Next: volts, amps and ohms, in one minute.

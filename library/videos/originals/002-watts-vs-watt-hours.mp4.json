@@ -1,0 +1,29 @@
+{
+  "file": "originals/002-watts-vs-watt-hours.mp4",
+  "title": "Watts vs watt-hours: power, energy and your daily budget",
+  "topic": "power",
+  "tags": [
+    "energy",
+    "power",
+    "batteries",
+    "off-grid",
+    "hydro",
+    "micro-hydro",
+    "starlink",
+    "dump-load",
+    "safety",
+    "first-book-originals"
+  ],
+  "duration_s": 114.4,
+  "description": "An original animated explainer. Watts are power, a rate; watt-hours are energy, power times time. Why a small stream's 245 W all day (5,880 Wh) beats a 400 W solar panel's three sunny hours (1,200 Wh), how to list your loads in watt-hours a day (a Starlink dish, a laptop, LED lights and phone charging come to about 2,820 Wh), where the spare goes, and the rule that a hydro generator never runs without a load: it needs a dump (diversion) load, or it overspeeds and the voltage spikes.",
+  "source": "The First Book / galasfoundry (First Book Originals #002, original animation)",
+  "license": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "creator": "The First Book / galasfoundry",
+  "creator_url": "https://github.com/galasfoundry/ModelWidgetTemplate",
+  "attribution": "“Watts vs watt-hours: power, energy and your daily budget” by The First Book / galasfoundry, licensed CC BY 4.0",
+  "subtitles": "002-watts-vs-watt-hours.srt",
+  "episode": "002",
+  "narration_voice": "Piper TTS, en_GB 'cori' (high); dataset public domain (LibriVox)",
+  "fact_check": "Fact-checked by Murder, 20 Nov 2026. PASS WITH FIXES applied."
+}
