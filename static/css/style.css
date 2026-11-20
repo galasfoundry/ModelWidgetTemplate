@@ -229,6 +229,31 @@ ol.scores li:first-child {
   font-size: 0.8rem;
 }
 
+#model-discover {
+  margin-top: 1.5rem;
+}
+
+#model-discover h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+#discover-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+
+#discover-q {
+  flex: 1 1 16rem;
+}
+
+.fit-fits { color: var(--muted); }
+.fit-tight { color: var(--muted); }
+.fit-wont { color: var(--muted); }
+
 #model-picker summary {
   cursor: pointer;
   color: var(--muted);

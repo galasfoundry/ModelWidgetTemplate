@@ -150,6 +150,16 @@ python scripts/download_models.py --all --dry-run         # what --all would fet
 python scripts/download_models.py --all                   # everything that fits this machine
 ```
 
+To grab a model that is not in the curated list, search Hugging Face for GGUF chat models that fit this machine (a previous search is cached and still shows when you are offline):
+
+```bash
+python scripts/discover_models.py --q "llama 3.2 1b instruct"
+python scripts/discover_models.py --q "llama 3.2 1b instruct" --add 1
+python scripts/download_models.py user-llama-3-2-1b-instruct-q4-k-m
+```
+
+Picks are written to `config/models_user.json` (gitignored), never to the curated catalog. The same search is on the **Models** page under **Discover**. Gated repos are skipped unless `HF_TOKEN` is set.
+
 It shows progress, skips anything already on disk without going online, and
 can simply be run again after an interruption. GGUF chat models fetch **one**
 quantised file (e.g. `gemma-3-270m-it-Q4_K_M.gguf`, ~253 MB), not the whole

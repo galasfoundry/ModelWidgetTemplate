@@ -1,0 +1,57 @@
+{
+  "bartowski/Qwen2.5-1.5B-Instruct-GGUF": {
+    "id": "bartowski/Qwen2.5-1.5B-Instruct-GGUF",
+    "sha": "9eadc66189c7aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "gated": false,
+    "likes": 25,
+    "downloads": 53555,
+    "pipeline_tag": "text-generation",
+    "tags": ["gguf", "chat", "text-generation", "license:apache-2.0"],
+    "cardData": {"license": "apache-2.0", "tags": ["chat"], "base_model": "Qwen/Qwen2.5-1.5B-Instruct"},
+    "siblings": []
+  },
+  "unsloth/Llama-3.2-1B-Instruct-GGUF": {
+    "id": "unsloth/Llama-3.2-1B-Instruct-GGUF",
+    "sha": "b69aef112e9fbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "gated": false,
+    "likes": 86,
+    "downloads": 58894,
+    "pipeline_tag": "text-generation",
+    "tags": ["gguf", "transformers", "text-generation", "license:llama3.2"],
+    "cardData": {"license": "llama3.2", "base_model": "meta-llama/Llama-3.2-1B-Instruct"},
+    "siblings": []
+  },
+  "someone/Secret-Chat-7B-GGUF": {
+    "id": "someone/Secret-Chat-7B-GGUF",
+    "sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "gated": "auto",
+    "likes": 4,
+    "downloads": 12000,
+    "pipeline_tag": "text-generation",
+    "tags": ["gguf", "chat"],
+    "cardData": {"license": "other"},
+    "siblings": []
+  },
+  "someone/CustomCode-1B-Instruct-GGUF": {
+    "id": "someone/CustomCode-1B-Instruct-GGUF",
+    "sha": "dddddddddddddddddddddddddddddddddddddddd",
+    "gated": false,
+    "likes": 3,
+    "downloads": 8000,
+    "pipeline_tag": "text-generation",
+    "tags": ["gguf", "chat", "trust_remote_code"],
+    "cardData": {"license": "mit", "trust_remote_code": true},
+    "siblings": []
+  },
+  "someone/Qwen2.5-3B-Instruct-GGUF": {
+    "id": "someone/Qwen2.5-3B-Instruct-GGUF",
+    "sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "gated": false,
+    "likes": 9,
+    "downloads": 15000,
+    "pipeline_tag": "text-generation",
+    "tags": ["gguf", "chat", "license:apache-2.0"],
+    "cardData": {"license": "apache-2.0"},
+    "siblings": []
+  }
+}

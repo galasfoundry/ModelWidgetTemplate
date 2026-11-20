@@ -21,9 +21,12 @@ def test_status_reports_content_and_capabilities(tmp_path):
     assert body["maps"]["count"] == 1 and body["videos"]["count"] == 1
     assert body["guides"] == {"count": 1, "placeholders": 1}
     models = body["models"]
-    assert models["catalog_count"] == 8
+    data = catalog.load_catalog()
+    curated = [m for m in data["models"] if m.get("source") != "user"]
+    assert len(curated) == 8
+    assert models["catalog_count"] == len(data["models"])
     assert models["planned"] == []
-    assert models["by_category"]["llm"] == 5
+    assert sum(1 for m in curated if catalog.category_of(m) == "llm") == 5
     assert models["by_category"]["vision"] == 2
     assert "ram_total_gb" in body["capabilities"]
     assert "llama_cpp" in body["capabilities"]["optional_backends"]
@@ -57,9 +60,13 @@ def test_safe_child_blocks_escape(tmp_path):
 
 def test_gguf_entries_are_downloadable_single_files():
     data = catalog.load_catalog(catalog.CATALOG_PATH)
-    gguf = [m for m in data["models"] if m.get("gguf_file")]
-    assert len(gguf) == 4 and data["planned"] == []
-    for entry in gguf:
+    curated_gguf = [
+        m for m in data["models"] if m.get("gguf_file") and m.get("source") != "user"
+    ]
+    assert len(curated_gguf) == 4 and data["planned"] == []
+    for entry in data["models"]:
+        if not entry.get("gguf_file"):
+            continue
         assert entry["status"] == "downloadable" and entry["backend"] == "llama_cpp"
         assert entry["gguf_file"].endswith(".gguf") and len(entry["revision"]) == 40
 

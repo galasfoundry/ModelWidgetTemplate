@@ -7,6 +7,9 @@ unless ``LAZY_LOAD=0``.
 ``/api/models`` lists the offline catalog filtered for this machine, and
 ``POST /api/models/select`` installs (only if missing), loads and switches to
 one of those models, then records it in ``config/.env``.
+``GET /api/models/discover`` searches Hugging Face for GGUF chat models that
+fit this machine; picks land in ``config/models_user.json``, never the
+curated catalog.
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ from PIL import Image
 
 from firstbook.library import Library
 from firstbook.web import create_blueprint, model_summary
-from modelwidget import catalog
+from modelwidget import catalog, discover
 from modelwidget.capabilities import detect_capabilities
 from modelwidget.downloads import DownloadManager
 from modelwidget.service import ModelService
@@ -141,8 +144,73 @@ def create_app(
             }
         )
 
+    @app.get("/api/models/discover")
+    def discover_models():
+        """Search Hugging Face for GGUF chat models that fit this machine."""
+        query = request.args.get("q", "")
+        task = request.args.get("task", "chat") or "chat"
+        caps = detect_capabilities(current().settings.weights_dir)
+        catalog_file = app.config["CATALOG_PATH"]
+        payload = discover.discover(
+            query,
+            caps,
+            task=task,
+            catalog_file=catalog_file,
+            cache_file=discover.cache_path(catalog_file),
+        )
+        return jsonify(payload)
+
+    @app.post("/api/models/discover/add")
+    def discover_add():
+        """Write a discovery pick into the user catalog, not the curated one."""
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({"error": "Send JSON describing the model to add."}), 400
+        catalog_file = app.config["CATALOG_PATH"]
+        try:
+            if "index" in data and data.get("hf_id") is None:
+                try:
+                    index = int(data["index"])
+                except (TypeError, ValueError) as exc:
+                    raise discover.DiscoveryError("index must be a number.", 400) from exc
+                candidate = discover.candidate_from_cache(
+                    index, discover.cache_path(catalog_file), catalog_file
+                )
+            else:
+                candidate = data.get("candidate") if isinstance(data.get("candidate"), dict) else data
+            entry = discover.add_candidate(candidate, catalog_file)
+        except discover.DiscoveryError as exc:
+            return jsonify({"error": str(exc)}), exc.status
+        return jsonify({"added": entry}), 201
+
+    @app.post("/api/models/discover/remove")
+    def discover_remove():
+        """Drop a user-added model from the user catalog. Weights stay on disk."""
+        data = request.get_json(silent=True) or {}
+        model_key = data.get("id") if isinstance(data, dict) else None
+        if not isinstance(model_key, str) or not model_key.strip():
+            return jsonify({"error": "Send JSON {\"id\": \"<catalog id>\"}."}), 400
+        active = current().settings
+        catalog_file = app.config["CATALOG_PATH"]
+        try:
+            data = catalog.load_catalog(catalog_file)
+        except catalog.SelectionError as exc:
+            return jsonify({"error": str(exc)}), exc.status
+        entry = next((item for item in data["models"] if item["id"] == model_key.strip()), None)
+        active_id = entry["id"] if entry is not None and catalog.is_active(entry, active) else None
+        try:
+            removed = discover.remove_user_model(
+                model_key.strip(),
+                catalog_file=catalog_file,
+                active_id=active_id,
+            )
+        except discover.DiscoveryError as exc:
+            return jsonify({"error": str(exc)}), exc.status
+        return jsonify({"removed": removed["id"]})
+
     @app.post("/api/models/select")
     def select_model():
+
         data = request.get_json(silent=True) or {}
         model_key = data.get("id") if isinstance(data, dict) else None
         if not isinstance(model_key, str) or not model_key.strip():

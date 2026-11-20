@@ -35,7 +35,8 @@ function modelItem(model, selectable) {
 
   const desc = document.createElement("p");
   desc.className = "extra";
-  desc.textContent = `${model.task} · ${model.backend} — ${model.description || ""}`;
+  const origin = model.source === "user" ? " · added from Discover" : "";
+  desc.textContent = `${model.task} · ${model.backend}${origin} — ${model.description || ""}`;
   item.appendChild(desc);
 
   const notes = [...(model.reasons || []), ...(model.warnings || []).map((w) => `warning: ${w}`)];
@@ -67,6 +68,13 @@ function modelItem(model, selectable) {
     button.textContent = "Use this model";
     button.addEventListener("click", () => selectModel(model, button));
     item.appendChild(button);
+  }
+  if (model.source === "user" && !model.active) {
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Remove from catalog";
+    remove.addEventListener("click", () => removeUserModel(model, remove));
+    item.appendChild(remove);
   }
   return item;
 }
@@ -183,3 +191,154 @@ async function selectModel(model, button) {
 }
 
 loadModels();
+
+
+async function removeUserModel(model, button) {
+  button.disabled = true;
+  pickerStatus.textContent = `Removing ${model.name} from the user catalog…`;
+  try {
+    const response = await fetch("/api/models/discover/remove", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: model.id }),
+    });
+    const payload = await response.json();
+    pickerStatus.textContent = response.ok
+      ? `Removed ${model.name}. The file on disk is unchanged.`
+      : (payload.error || "Could not remove that model.");
+  } catch (error) {
+    pickerStatus.textContent = "Could not reach the local server.";
+  }
+  await loadModels();
+}
+
+const discoverForm = document.querySelector("#discover-form");
+const discoverQ = document.querySelector("#discover-q");
+const discoverList = document.querySelector("#discover-list");
+const discoverStatus = document.querySelector("#discover-status");
+const discoverSubmit = document.querySelector("#discover-submit");
+
+function ageLabel(seconds) {
+  if (seconds == null) return "";
+  if (seconds < 60) return "less than a minute ago";
+  if (seconds < 3600) {
+    const n = Math.round(seconds / 60);
+    return n === 1 ? "1 minute ago" : `${n} minutes ago`;
+  }
+  const hours = Math.round(seconds / 3600);
+  if (hours < 48) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
+}
+
+function discoverStatusText(payload) {
+  if (payload.online) {
+    const n = (payload.results || []).length;
+    return n ? `${n} model(s) for "${payload.query}".` : `No GGUF chat models found for "${payload.query}".`;
+  }
+  const age = ageLabel(payload.cache_age_seconds);
+  const cacheBit = payload.cached
+    ? ` Showing a cached search for "${payload.query}"${age ? " from " + age : ""}.`
+    : " No cached search is available.";
+  return (payload.error || "Hugging Face could not be reached.") + cacheBit;
+}
+
+function discoverItem(row) {
+  const item = document.createElement("li");
+  item.className = "picker-item";
+  const head = document.createElement("div");
+  head.className = "picker-head";
+  const name = document.createElement("strong");
+  name.textContent = row.name || row.hf_id;
+  head.appendChild(name);
+  const badge = document.createElement("span");
+  badge.className = "badge fit-" + (row.fit === "won't fit" ? "wont" : row.fit || "");
+  badge.textContent = `${row.fit || "?"} · ${row.quant || "?"} · ~${row.approx_size_mb} MB`;
+  head.appendChild(badge);
+  item.appendChild(head);
+
+  const desc = document.createElement("p");
+  desc.className = "extra";
+  const bits = [
+    row.hf_id,
+    row.license ? `licence ${row.license}` : null,
+    row.gated ? "gated" : "public",
+    `${row.downloads || 0} downloads`,
+    `${row.likes || 0} likes`,
+  ].filter(Boolean);
+  desc.textContent = bits.join(" · ");
+  item.appendChild(desc);
+
+  if (row.reason) {
+    const why = document.createElement("p");
+    why.className = "extra";
+    why.textContent = row.reason;
+    item.appendChild(why);
+  }
+
+  if (row.in_catalog) {
+    const note = document.createElement("p");
+    note.className = "extra";
+    note.textContent = `Already in the catalog as ${row.in_catalog}.`;
+    item.appendChild(note);
+  } else if (row.fit !== "won't fit") {
+    const add = document.createElement("button");
+    add.type = "button";
+    add.textContent = "Add to catalog";
+    add.addEventListener("click", () => addDiscovered(row, add));
+    item.appendChild(add);
+  }
+  return item;
+}
+
+async function addDiscovered(row, button) {
+  button.disabled = true;
+  discoverStatus.textContent = `Adding ${row.name}…`;
+  try {
+    const response = await fetch("/api/models/discover/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(row),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      discoverStatus.textContent = payload.error || "Could not add that model.";
+      button.disabled = false;
+      return;
+    }
+    discoverStatus.textContent = `Added ${payload.added.name}. Download it from the list above.`;
+    await loadModels();
+    await runDiscover(discoverQ.value, true);
+  } catch (error) {
+    discoverStatus.textContent = "Could not reach the local server.";
+    button.disabled = false;
+  }
+}
+
+async function runDiscover(query, quiet) {
+  if (discoverSubmit) discoverSubmit.disabled = true;
+  if (!quiet) discoverStatus.textContent = query ? `Searching for "${query}"…` : "Searching…";
+  try {
+    const params = new URLSearchParams({ task: "chat" });
+    if (query) params.set("q", query);
+    const response = await fetch(`/api/models/discover?${params.toString()}`);
+    const payload = await response.json();
+    if (!response.ok) {
+      discoverStatus.textContent = payload.error || "Search failed.";
+      return;
+    }
+    discoverStatus.textContent = discoverStatusText(payload);
+    discoverList.replaceChildren(...(payload.results || []).map(discoverItem));
+  } catch (error) {
+    discoverStatus.textContent = "Could not reach the local server.";
+  } finally {
+    if (discoverSubmit) discoverSubmit.disabled = false;
+  }
+}
+
+if (discoverForm) {
+  discoverForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    runDiscover(discoverQ.value.trim(), false);
+  });
+}
