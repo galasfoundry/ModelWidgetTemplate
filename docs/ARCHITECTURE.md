@@ -210,8 +210,9 @@ committed. The seven take about 290 MB at 360p (about 500 MB at
 Animated explainers made for The First Book go in `library/videos/originals/`.
 They are CC BY 4.0, credited to The First Book / galasfoundry, and fact-checked
 by Murder. The `<video>.json` sidecar and `.srt` subtitles are committed; the
-`.mp4` is not. Copy `001-head-and-flow.mp4` (about 6.7 MB, 720p) next to the
-shipped sidecar and subtitles and it appears on `/videos` under Power. The
+`.mp4` is not. Copy `001-head-and-flow.mp4` (about 6.7 MB, 720p) and
+`002-watts-vs-watt-hours.mp4` (about 6.4 MB, 720p) next to the shipped
+sidecars and subtitles and they appear on `/videos` under Power. The
 watch page shows the credit line (without the "reduced resolution" note used
 for the YouTube copies) and serves the `.srt` as WebVTT on
 `/videos/subtitles/...` for a `<track>` element.
