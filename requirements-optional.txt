@@ -11,3 +11,8 @@ psutil>=5.9
 #     --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 # Tested with llama-cpp-python 0.3.36.
 # llama-cpp-python>=0.3
+
+# Setup-time only: scripts/fetch_videos.py downloads the Creative Commons
+# videos in config/videos_catalog.json. ffmpeg on PATH joins video and audio
+# into one MP4 (without it you get lower-quality single-file streams).
+yt-dlp>=2025.1

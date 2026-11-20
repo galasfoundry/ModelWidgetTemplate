@@ -1,0 +1,130 @@
+1
+00:00:00,500 --> 00:00:03,784
+Head and flow. How much power is in your
+stream?
+
+2
+00:00:04,504 --> 00:00:09,023
+A stream is a battery that keeps
+refilling, as long as it rains.
+
+3
+00:00:09,203 --> 00:00:13,502
+Water up the hill holds energy; gravity
+releases it as it falls.
+
+4
+00:00:14,222 --> 00:00:15,675
+Just two numbers matter.
+
+5
+00:00:15,855 --> 00:00:18,375
+Head: how far the water drops, in metres.
+
+6
+00:00:18,555 --> 00:00:20,002
+And flow: litres per second.
+
+7
+00:00:20,722 --> 00:00:26,247
+Power equals water's density, times
+gravity, times flow, times head,
+
+8
+00:00:26,247 --> 00:00:27,629
+times efficiency.
+
+9
+00:00:27,809 --> 00:00:29,951
+Density and gravity never change.
+
+10
+00:00:30,131 --> 00:00:32,442
+Your stream sets just two: flow and head.
+
+11
+00:00:33,162 --> 00:00:36,761
+Take a stream: 5 litres a second, falling
+10 metres.
+
+12
+00:00:36,941 --> 00:00:44,568
+1,000 × 9.81 × 0.005 × 10: about 490
+watts.
+
+13
+00:00:45,288 --> 00:00:48,460
+But pipe, turbine and generator all lose
+some.
+
+14
+00:00:48,640 --> 00:00:53,058
+At about 50% overall, that's roughly 245
+watts.
+
+15
+00:00:53,778 --> 00:00:57,824
+Small? It runs day and night: nearly 6
+kilowatt hours a day.
+
+16
+00:00:58,004 --> 00:01:02,439
+Enough for a satellite internet dish, all
+day, with power to spare.
+
+17
+00:01:03,159 --> 00:01:07,289
+For a small stream, channel the whole flow
+into a bucket, and time it.
+
+18
+00:01:07,469 --> 00:01:12,719
+20 litres in 4 seconds is 5 litres a
+second. Repeat, and average.
+
+19
+00:01:13,439 --> 00:01:18,494
+Measure after a dry spell, and design for
+your lowest flow, not your best day.
+
+20
+00:01:19,214 --> 00:01:23,707
+For head, take a clear hose full of water:
+one end at the intake, one downhill.
+
+21
+00:01:23,887 --> 00:01:28,823
+Water sits level at both ends: measure the
+drop, move down, repeat, and add them up.
+
+22
+00:01:29,003 --> 00:01:32,536
+Or fill a pipe from the intake, close the
+end, and read a gauge:
+
+23
+00:01:32,536 --> 00:01:34,357
+1 bar is about 10 metres of head.
+
+24
+00:01:35,077 --> 00:01:39,069
+Streams rise fast and run cold, so never
+measure alone.
+
+25
+00:01:39,249 --> 00:01:43,774
+In the UK, diverting water to a turbine
+almost always needs a licence,
+
+26
+00:01:43,774 --> 00:01:45,519
+and the landowner's say-so.
+
+27
+00:01:46,239 --> 00:01:51,943
+Remember: litres per second, times metres
+of head, times five, gives you watts.
+
+28
+00:01:52,123 --> 00:01:56,525
+5 × 10 × 5: about 250 watts.
