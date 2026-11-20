@@ -20,7 +20,8 @@ firstbook/library.py        data root and section folders (LIBRARY_DIR, MAPS_DIR
 firstbook/maps.py           map pack listing, MBTiles tile reads (stdlib sqlite3)
 firstbook/videos.py         video index from videos.json + sidecars, search, topics
 firstbook/guides.py         Markdown/text guides, keyword search
-firstbook/web.py            routes for /home, /maps, /videos, /guides and /api/status
+firstbook/chat.py           First Book chat prompt, history trim and status messages
+firstbook/web.py            routes for /home, /maps, /videos, /guides, /chat and /api/status
 modelwidget/catalog.py      model catalog (category, status), filtering, install-if-missing
 modelwidget/capabilities.py RAM, disk, CUDA, backends (incl. optional llama_cpp)
 modelwidget/downloads.py    background download jobs, progress, single-file GGUF fetch
@@ -70,6 +71,9 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /videos/file/<path>` | Stream a video with HTTP Range (206) |
 | `GET /guides`, `GET /api/guides?q=` | List and search guides |
 | `GET /guides/<slug>`, `GET /api/guides/<slug>` | One guide |
+| `GET /chat`, `GET /api/chat/status` | Offline GGUF chat page and readiness |
+| `POST /api/chat` | Stream a chat reply (SSE). Body: `{ "messages": [...] }` |
+| `POST /api/chat/stop` | Stop the current chat reply |
 | `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately) |
 | `POST /api/models/<id>/download`, `GET /api/models/<id>/status`, `GET /api/models/downloads` | Background downloads into `weights/` with progress |
 
@@ -243,6 +247,15 @@ The picker is extended, not replaced:
   loads the file through `modelwidget/gguf.py`, `MODEL_FILE` names it in
   `config/.env`, and `ModelService` fetches only that file if it is missing
   (`paths.ensure_file`).
+* `/chat` is a bare streaming chat page for those GGUF models. It sends
+  `POST /api/chat` (SSE) with the session history, a short First Book system
+  prompt, and `CHAT_MAX_TOKENS` (default 384). The model's GGUF chat template
+  is applied. History is trimmed to fit `LLAMA_N_CTX` (default 2048). Stop
+  (`POST /api/chat/stop`) and Clear are on the page. `/api/predict` is
+  unchanged and still uses `MAX_NEW_TOKENS` (40). If llama-cpp-python is
+  missing or no chat model is downloaded and selected, the page shows a
+  short message, the install command from `requirements-optional.txt`, and a
+  link to the model page, and does not crash.
 * See the README section "Downloading models" for the CLI and
   troubleshooting (MODEL_WEIGHTS, HF_HUB_OFFLINE, disk space, proxies).
 
@@ -251,7 +264,7 @@ The picker is extended, not replaced:
 1. Fix the UI bugs Robin found in the model picker page (see Known issues).
 2. Map viewer follow-ups: labels and a proper style for OS Open Zoomstack /
    OpenMapTiles packs, search by place name, GPS position, offline routing.
-3. Chat-style page for the GGUF models (history, system prompt, streaming).
+3. Chat-style page for the GGUF models: done (`/chat`, streaming, history, system prompt).
 4. Render Markdown guides (small vendored or stdlib renderer); real guides
    with cited sources.
 5. Video thumbnails (ffmpeg optional) and a nicer browse-by-topic page.

@@ -10,6 +10,7 @@
     <li><a href="{{ url_for('firstbook.maps_page') }}">Maps</a>: {{ status.maps.count }} pack(s)</li>
     <li><a href="{{ url_for('firstbook.videos_page') }}">Videos</a>: {{ status.videos.count }}</li>
     <li><a href="{{ url_for('firstbook.guides_page') }}">Guides</a>: {{ status.guides.count }}</li>
+    <li><a href="{{ url_for('firstbook.chat_page') }}">Chat</a>: offline GGUF assistant</li>
     <li><a href="{{ url_for('index') }}">Models</a>:
       {% if status.models.error %}{{ status.models.error }}{% else %}{{ status.models.installed|length }} installed, active {{ status.models.active.model_id }}{% endif %}</li>
   </ul>

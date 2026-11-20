@@ -1,4 +1,4 @@
-"""Flask routes for The First Book sections: home, maps, videos, guides, status.
+"""Flask routes for The First Book sections: home, maps, videos, guides, chat, status.
 
 The model widget routes stay in ``app.py``; this blueprint only adds to them.
 Pages are deliberately bare (UI work is pending, see docs/ARCHITECTURE.md).
@@ -6,11 +6,13 @@ Pages are deliberately bare (UI work is pending, see docs/ARCHITECTURE.md).
 
 from __future__ import annotations
 
+import json
+import threading
 from typing import Callable
 
-from flask import Blueprint, Response, abort, jsonify, render_template, request, send_file
+from flask import Blueprint, Response, abort, current_app, jsonify, render_template, request, send_file, stream_with_context
 
-from firstbook import guides, maps, videos
+from firstbook import chat as chatlib, guides, maps, videos
 from firstbook.library import Library, safe_child
 from modelwidget import catalog
 from modelwidget.capabilities import detect_capabilities
@@ -52,6 +54,10 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
         if item is None:
             abort(404)
         return render_template("video_watch.html", video=item)
+
+    @bp.get("/chat")
+    def chat_page():
+        return render_template("chat.html", chat=_chat_status())
 
     @bp.get("/guides")
     def guides_page():
@@ -149,6 +155,56 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
             return jsonify({"error": f"No guide {slug!r}."}), 404
         return jsonify(guide)
 
+    # ---- chat --------------------------------------------------------------
+    @bp.get("/api/chat/status")
+    def api_chat_status():
+        return jsonify(_chat_status())
+
+    @bp.post("/api/chat/stop")
+    def api_chat_stop():
+        event = current_app.config.setdefault("CHAT_STOP", threading.Event())
+        event.set()
+        return jsonify({"stopped": True})
+
+    @bp.post("/api/chat")
+    def api_chat():
+        status = _chat_status()
+        if not status["ready"]:
+            return jsonify({"error": status["message"], "status": status}), 409
+        body = request.get_json(silent=True) or {}
+        service = current_app.config["SERVICE"]
+        history = chatlib.normalize_history(body.get("messages"), service.settings.max_input_chars)
+        if not history or history[-1]["role"] != "user":
+            return jsonify({"error": "Send JSON {\"messages\": [{\"role\": \"user\", \"content\": \"...\"}]}."}), 400
+        messages = chatlib.build_messages(history)
+        stop_event = current_app.config.setdefault("CHAT_STOP", threading.Event())
+        stop_event.clear()
+
+        def generate():
+            from modelwidget.service import ModelBusy
+
+            try:
+                service.ensure_loaded()
+                prepared = chatlib.trim_messages(
+                    messages,
+                    service.token_counter(),
+                    int(service.settings.llama_n_ctx),
+                    int(service.settings.chat_max_tokens),
+                )
+                for delta in service.stream_chat(prepared, stop_event=stop_event):
+                    yield f"data: {json.dumps({'token': delta})}\n\n"
+                yield f"data: {json.dumps({'done': True, 'stopped': stop_event.is_set()})}\n\n"
+            except ModelBusy as exc:
+                yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            except Exception as exc:
+                yield f"data: {json.dumps({'error': f'Chat failed: {exc}'})}\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     # ---- status ------------------------------------------------------------
     @bp.get("/api/status")
     def api_status():
@@ -160,6 +216,30 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
 
     def _packs(cat: dict | None = None) -> list[dict]:
         return maps.list_packs(library.maps_dir, cat if cat is not None else _maps_catalog())
+
+    def _chat_status() -> dict:
+        from modelwidget.gguf import available
+
+        service = current_app.config["SERVICE"]
+        settings = service.settings
+        caps = detect_capabilities(settings.weights_dir)
+        data = catalog.load_catalog(current_app.config.get("CATALOG_PATH"))
+        installed = set()
+        for entry in data.get("models") or []:
+            if not chatlib.is_chat_entry(entry):
+                continue
+            row = catalog.evaluate(entry, caps, settings.weights_dir)
+            if row.get("installed"):
+                installed.add(entry["id"])
+        return chatlib.status(
+            backend_available=available(),
+            settings=settings,
+            loaded=service.loaded,
+            catalog_data=data,
+            installed_ids=installed,
+            chat_max_tokens=int(getattr(settings, "chat_max_tokens", chatlib.DEFAULT_CHAT_MAX_TOKENS)),
+            n_ctx=int(getattr(settings, "llama_n_ctx", chatlib.DEFAULT_N_CTX)),
+        )
 
     def _status() -> dict:
         caps = detect_capabilities(library.weights_dir)

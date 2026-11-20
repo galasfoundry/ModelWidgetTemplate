@@ -239,3 +239,10 @@ ol.scores li:first-child {
 .fb-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .guide-text { white-space: pre-wrap; }
 .fb-map { width: 100%; height: 70vh; min-height: 320px; border: 1px solid #ccc; }
+
+/* Chat page: bare layout, UI pass still to come. */
+#transcript { list-style: none; padding: 0; margin: 1rem 0; }
+.chat-msg { margin: 0.75rem 0; }
+.chat-msg .chat-text { white-space: pre-wrap; margin-top: 0.25rem; }
+#chat-input { display: block; width: 100%; max-width: 40rem; }
+#chat-install { overflow-x: auto; }

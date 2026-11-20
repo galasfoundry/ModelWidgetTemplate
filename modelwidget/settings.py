@@ -71,6 +71,9 @@ class Settings:
     label_map_path: Path | None
     # One file inside the snapshot to load (GGUF models). Empty for whole snapshots.
     model_file: str = ""
+    # Chat page only (does not change /api/predict, which uses max_new_tokens).
+    chat_max_tokens: int = 384
+    llama_n_ctx: int = 2048
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -108,4 +111,6 @@ class Settings:
             weights_dir=resolve_path("WEIGHTS_DIR", PROJECT_ROOT / "weights"),
             label_map_path=resolve_path("LABEL_MAP_PATH", Path()) if label_raw else None,
             model_file=_raw("MODEL_FILE"),
+            chat_max_tokens=max(1, env_int("CHAT_MAX_TOKENS", 384)),
+            llama_n_ctx=max(256, env_int("LLAMA_N_CTX", 2048)),
         )

@@ -96,7 +96,9 @@ cp config/.env.example config/.env
 | `LOW_CPU_MEM_USAGE` | `1` | Pass `low_cpu_mem_usage` into transformers `from_pretrained` |
 | `LAZY_LOAD` | `1` | Load on the first request |
 | `TOP_K` | `5` | Classes returned for classifiers |
-| `MAX_NEW_TOKENS` | `40` | Tokens appended by the generator |
+| `MAX_NEW_TOKENS` | `40` | Tokens appended by `/api/predict` |
+| `CHAT_MAX_TOKENS` | `384` | Tokens appended by the `/chat` page |
+| `LLAMA_N_CTX` | `2048` | Context length for GGUF chat models |
 | `MAX_INPUT_CHARS` | `4000` | Longest prompt accepted |
 | `MAX_UPLOAD_MB` | `8` | Largest image upload |
 | `TORCH_NUM_THREADS` | unset | Cap PyTorch CPU threads |
@@ -175,10 +177,14 @@ pip install llama-cpp-python --prefer-binary \
 ```
 
 Then **Use this model** works and `config/.env` gets `MODEL_FILE=<the .gguf>`
-alongside the other `MODEL_*` keys. `MAX_NEW_TOKENS` (default 40) sets the
-reply length; `LLAMA_N_CTX` (default 2048) the context. On a 4 GB laptop the
-270M-500M models are comfortable; Llama 3.2 1B (~808 MB) works but shows a
-warning: close other apps first.
+alongside the other `MODEL_*` keys. Open http://127.0.0.1:5000/chat for a
+streaming chat page (history in the session, Stop and Clear, a short First
+Book system prompt, the model's own chat template). `CHAT_MAX_TOKENS`
+(default 384) sets the chat reply length; `/api/predict` still uses
+`MAX_NEW_TOKENS` (default 40). `LLAMA_N_CTX` (default 2048) is the context;
+old turns are dropped when a conversation would overflow it. On a 4 GB
+laptop the 270M-500M models are comfortable; Llama 3.2 1B (~808 MB) works
+but shows a warning: close other apps first.
 
 ### Troubleshooting downloads
 
