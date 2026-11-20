@@ -5,15 +5,15 @@
 > laptop. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
 > look at, run `python scripts/fetch_demo_map.py` once while online, then open
 > http://127.0.0.1:5000/maps . For videos, use the Download library button
-> on http://127.0.0.1:5000/videos to fetch the remote catalog (the default
-> host is a placeholder; set `FIRSTBOOK_LIBRARY_URL`, see
+> on http://127.0.0.1:5000/videos . The default host is the live GitHub
+> Release `library-v1` (`FIRSTBOOK_LIBRARY_URL`, see
 > [docs/REMOTE_VIDEO_LIBRARY.md](docs/REMOTE_VIDEO_LIBRARY.md)).
-> `python scripts/fetch_videos.py` remains a fallback for the seven Creative
+> `python scripts/fetch_videos.py` remains a fallback for the Creative
 > Commons YouTube videos (`pip install yt-dlp`, about 290 MB at 360p; credits in
-> [library/videos/README.md](library/videos/README.md)). For the original
-> "Head and flow" and "Watts vs watt-hours" episodes, copy each `.mp4` into
-> `library/videos/originals/` (the sidecars and subtitles are already in the
-> repo). Then open
+> [library/videos/README.md](library/videos/README.md)). The original
+> "Head and flow" and "Watts vs watt-hours" episodes are on that release.
+> Their sidecars and subtitles are already in the repo; the `.mp4` files
+> are not in git. Then open
 > http://127.0.0.1:5000/videos . Content goes
 > in `library/` (maps, videos, guides); see
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layout, routes, how to

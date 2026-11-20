@@ -6,8 +6,8 @@ fetch a versioned manifest and then selected files, each streamed to a
 ``.part`` file, checked with sha256, and renamed into place atomically.
 
 The library base URL is ``FIRSTBOOK_LIBRARY_URL`` (and the same key in
-``config/.env``). The default is a clearly marked GitHub Releases
-placeholder under galasfoundry. ``FIRSTBOOK_LIBRARY_MANIFEST`` overrides
+``config/.env``). The default is the published GitHub Release
+``library-v1`` under galasfoundry. ``FIRSTBOOK_LIBRARY_MANIFEST`` overrides
 that with a local file or a direct manifest URL, which is how tests and
 a USB-key copy work. Publishing a new episode is: build the manifest,
 upload the files, no code change. ``scripts/fetch_videos.py`` (yt-dlp)
@@ -34,6 +34,10 @@ from firstbook import videos
 from firstbook.library import VIDEOS_CATALOG_PATH
 
 SCHEMA = "firstbook.library.v1"
+DEFAULT_LIBRARY_URL = (
+    "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/"
+)
+# An old or mistaken setting may still point here. It is not a live host.
 PLACEHOLDER_LIBRARY_URL = (
     "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-placeholder/"
 )
@@ -94,12 +98,12 @@ class LibrarySettings:
 
     @property
     def display_url(self) -> str:
-        return self.manifest_spec or self.base_url or PLACEHOLDER_LIBRARY_URL
+        return self.manifest_spec or self.base_url or DEFAULT_LIBRARY_URL
 
 
 def library_settings() -> LibrarySettings:
     """Read the library URL from the environment (and so from config/.env)."""
-    base = os.environ.get(ENV_URL, "").strip() or PLACEHOLDER_LIBRARY_URL
+    base = os.environ.get(ENV_URL, "").strip() or DEFAULT_LIBRARY_URL
     if not base.endswith("/") and not base.lower().endswith(".json"):
         base += "/"
     manifest = os.environ.get(ENV_MANIFEST, "").strip()
@@ -390,8 +394,9 @@ def fetch_manifest(spec: str | None = None, *, settings: LibrarySettings | None 
         hint = ""
         if settings.is_placeholder or is_placeholder_url(spec):
             hint = (
-                " The default FIRSTBOOK_LIBRARY_URL is a placeholder, not a live host. "
-                "Set it to a real GitHub Releases, Internet Archive or self-hosted URL, "
+                " This FIRSTBOOK_LIBRARY_URL is a placeholder, not a live host. "
+                "Use the published library at "
+                "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/ "
                 "or set FIRSTBOOK_LIBRARY_MANIFEST to a local manifest file."
             )
         raise ManifestError(f"Could not fetch the library manifest ({exc.code}).{hint}") from exc
@@ -399,8 +404,9 @@ def fetch_manifest(spec: str | None = None, *, settings: LibrarySettings | None 
         hint = ""
         if settings.is_placeholder or is_placeholder_url(spec):
             hint = (
-                " The default FIRSTBOOK_LIBRARY_URL is a placeholder, not a live host. "
-                "Set FIRSTBOOK_LIBRARY_URL or FIRSTBOOK_LIBRARY_MANIFEST when you have one."
+                " This FIRSTBOOK_LIBRARY_URL is a placeholder, not a live host. "
+                "The published library is "
+                "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/ ."
             )
         raise ManifestError(f"Could not reach the library manifest (offline or blocked).{hint}") from exc
     if len(raw) > MANIFEST_MAX_BYTES:
@@ -782,7 +788,7 @@ def _sidecar_for_build(file: Path, videos_dir: Path, catalog_by_file: dict[str, 
 def build_remote_manifest(
     videos_dir: Path,
     *,
-    base_url: str = PLACEHOLDER_LIBRARY_URL,
+    base_url: str = DEFAULT_LIBRARY_URL,
     url_mode: str = "path",
     catalog_path: Path | None = None,
 ) -> dict:
