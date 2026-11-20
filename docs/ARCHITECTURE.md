@@ -10,7 +10,8 @@ exceptions are an explicit model download (`POST /api/models/select` or
 `POST /api/models/<id>/download`) and an explicit Hugging Face search from
 Discover (`GET /api/models/discover`). Search results are cached on disk so
 a previous search still shows offline. Map packs and videos are copied in
-by hand.
+by hand or fetched once by setup scripts (`scripts/fetch_demo_map.py`,
+`scripts/fetch_videos.py`).
 
 ## Code layout
 
@@ -34,6 +35,8 @@ scripts/discover_models.py  CLI: search Hugging Face for GGUF models that fit th
 config/models_catalog.json  curated model catalog
 config/models_user.json     user-added discovery picks (gitignored)
 config/maps_catalog.json    known UK map packs, sources and licences
+config/videos_catalog.json  Creative Commons (CC BY) videos with credits
+scripts/fetch_videos.py     setup-time download of the catalog videos (yt-dlp)
 scripts/build_video_manifest.py  scan a folder into videos.json (ffprobe optional)
 scripts/fetch_demo_map.py   setup-time UK map extracts from the Protomaps build
 static/js/maps.js           the /maps viewer
@@ -167,10 +170,14 @@ Adding more ranges is just copying more `.pbf` files into the font folders.
   `library/videos/videos.example.json`) and optional per-file sidecars
   `<video>.json` that override the manifest entry.
 * Fields: `file` (relative path), `title`, `topic`, `tags`, `duration_s`,
-  `description`, `source`, `license`. Files without metadata still appear.
-* Suggested topics (`firstbook.videos.TOPICS`): repair, electronics, power,
-  radio, computing, 3d-printing, tools, making, water, food, shelter,
-  first-aid, navigation, other.
+  `description`, `source`, `license`, plus `creator`, `creator_url`,
+  `license_url` and `attribution` for credited videos. Files without metadata
+  still appear.
+* Suggested topics (`firstbook.videos.TOPICS`): hydro, batteries,
+  starlink-off-grid, repair, electronics, power, radio, computing,
+  3d-printing, tools, making, water, food, shelter, first-aid, navigation,
+  other. `/videos` groups the list by topic and shows creator and licence;
+  the watch page shows the full credit line under the player.
 * Streaming uses `send_file(conditional=True)`, so seeking works (Range/206).
 
 ### Adding videos
@@ -180,6 +187,34 @@ Adding more ranges is just copying more `.pbf` files into the font folders.
    to `videos.json`, keeps existing notes and fills `duration_s` when
    `ffprobe` is installed.
 3. Edit titles and tags in `videos.json`. Record source and licence.
+
+### Creative Commons catalog
+
+`config/videos_catalog.json` holds videos that may be stored offline with
+credit: seven CC BY videos (3 hydro, 3 batteries, 1 Starlink off-grid) picked
+by Magpie and checked on YouTube on 19 Nov 2026. Entries carry title, URL,
+creator, licence, duration, topic, tags and a ready-made attribution line.
+`firstbook.videos.load_catalog()` ignores anything that is not CC BY (so no
+-NC/-ND/-SA, no standard YouTube licence) and any unsafe file path.
+
+`python scripts/fetch_videos.py` (yt-dlp, ffmpeg recommended) re-checks each
+licence on YouTube, downloads H.264/AAC MP4 at 360p or below by default (`--max-height 480` for
+sharper copies),
+keeps partial streams in the hidden `videos/.downloading/` so the page never
+lists them, and rebuilds `videos.json` with the credits. Video files are never
+committed. The seven take about 290 MB at 360p (about 500 MB at
+480p); H.264 is chosen over AV1/VP9 because it decodes cheaply on old laptops.
+
+### First Book originals
+
+Animated explainers made for The First Book go in `library/videos/originals/`.
+They are CC BY 4.0, credited to The First Book / galasfoundry, and fact-checked
+by Murder. The `<video>.json` sidecar and `.srt` subtitles are committed; the
+`.mp4` is not. Copy `001-head-and-flow.mp4` (about 6.7 MB, 720p) next to the
+shipped sidecar and subtitles and it appears on `/videos` under Power. The
+watch page shows the credit line (without the "reduced resolution" note used
+for the YouTube copies) and serves the `.srt` as WebVTT on
+`/videos/subtitles/...` for a `<track>` element.
 
 ## Guides
 
@@ -258,3 +293,6 @@ The picker is extended, not replaced:
 * The map viewer is bare: one pack at a time, no place search, and the
   generic style for non-Protomaps vector packs has no labels.
 * `scripts/build_video_manifest.py` drops entries whose files are gone.
+* YouTube rate-limits downloads from some networks ("HTTP 403", "confirm
+  you're not a bot"). `scripts/fetch_videos.py` waits and retries; otherwise
+  run it again later and it resumes. It does not use browser cookies.

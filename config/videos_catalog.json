@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "description": "Videos The First Book can fetch for offline use. Only Creative Commons Attribution (CC BY) videos belong here: scripts/fetch_videos.py re-checks each one's licence on YouTube before downloading and refuses anything else. The app itself never goes online; the files live in library/videos/ and are not in git. Credit each creator with the attribution line (the watch page shows it).",
+  "topics": {
+    "hydro": "DIY off-grid hydro",
+    "batteries": "Battery storage",
+    "starlink-off-grid": "Starlink off-grid"
+  },
+  "videos": [
+    {
+      "id": "50-dollar-water-turbine-results",
+      "youtube_id": "lBl4Sdw0dXo",
+      "title": "Real World Results From The $50 Water Turbine",
+      "url": "https://www.youtube.com/watch?v=lBl4Sdw0dXo",
+      "creator": "OpenSourceLowTech",
+      "creator_url": "https://www.youtube.com/@OpenSourceLowTech",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 913,
+      "published": "2022-04-22",
+      "topic": "hydro",
+      "tags": [
+        "hydro",
+        "turbine",
+        "low-head",
+        "diy"
+      ],
+      "description": "Field results for an open-source low-head turbine made from off-the-shelf and recycled parts; free build guide is linked from the channel.",
+      "file": "hydro/50-dollar-water-turbine-results.mp4",
+      "attribution": "“Real World Results From The $50 Water Turbine” by OpenSourceLowTech (https://www.youtube.com/@OpenSourceLowTech), https://www.youtube.com/watch?v=lBl4Sdw0dXo, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    },
+    {
+      "id": "motorbike-alternators-wind-water-turbines",
+      "youtube_id": "jLVcbd0C9Ns",
+      "title": "Motorbike Alternators With Wind & Water Turbines",
+      "url": "https://www.youtube.com/watch?v=jLVcbd0C9Ns",
+      "creator": "OpenSourceLowTech",
+      "creator_url": "https://www.youtube.com/@OpenSourceLowTech",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 1201,
+      "published": "2020-12-03",
+      "topic": "hydro",
+      "tags": [
+        "hydro",
+        "wind",
+        "alternator",
+        "salvage"
+      ],
+      "description": "Shows how to use widely available motorbike alternators as generators on water (and wind) turbines, including the bearing issue these units have.",
+      "file": "hydro/motorbike-alternators-wind-water-turbines.mp4",
+      "attribution": "“Motorbike Alternators With Wind & Water Turbines” by OpenSourceLowTech (https://www.youtube.com/@OpenSourceLowTech), https://www.youtube.com/watch?v=jLVcbd0C9Ns, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    },
+    {
+      "id": "pump-as-turbine-micro-hydro",
+      "youtube_id": "kiH02Gfj_k8",
+      "title": "Micro hydro power, Pump As Turbine",
+      "url": "https://www.youtube.com/watch?v=kiH02Gfj_k8",
+      "creator": "Leif Roger Innerdal",
+      "creator_url": "https://www.youtube.com/@TheHuggern",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 102,
+      "published": "2011-08-21",
+      "topic": "hydro",
+      "tags": [
+        "hydro",
+        "pump-as-turbine",
+        "dump-load"
+      ],
+      "description": "Short site film of a reversed Grundfos pump/induction motor: 18 m head, 5 l/s, 225 W, 75 m PE penstock, with a voltage regulator and dump load.",
+      "file": "hydro/pump-as-turbine-micro-hydro.mp4",
+      "attribution": "“Micro hydro power, Pump As Turbine” by Leif Roger Innerdal (https://www.youtube.com/@TheHuggern), https://www.youtube.com/watch?v=kiH02Gfj_k8, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    },
+    {
+      "id": "assembling-fused-18650-pack",
+      "youtube_id": "KNKmogsoXN8",
+      "title": "Assembling 18650 fused battery pack.",
+      "url": "https://www.youtube.com/watch?v=KNKmogsoXN8",
+      "creator": "Open Sun Power",
+      "creator_url": "https://www.youtube.com/@opensunpower8507",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 729,
+      "published": "2018-08-28",
+      "topic": "batteries",
+      "tags": [
+        "18650",
+        "battery-pack",
+        "fuses"
+      ],
+      "description": "Step-by-step assembly of an 18650 pack with 30-gauge bus-wire fuse links on the cells.",
+      "file": "batteries/assembling-fused-18650-pack.mp4",
+      "attribution": "“Assembling 18650 fused battery pack.” by Open Sun Power (https://www.youtube.com/@opensunpower8507), https://www.youtube.com/watch?v=KNKmogsoXN8, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    },
+    {
+      "id": "18650-salvage-test-sort-pack",
+      "youtube_id": "E_11eyYvp2M",
+      "title": "18650 Salvage, Testing, Sorting, & Making Pack",
+      "url": "https://www.youtube.com/watch?v=E_11eyYvp2M",
+      "creator": "richardhroth",
+      "creator_url": "https://www.youtube.com/@richardhroth",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 589,
+      "published": "2020-02-05",
+      "topic": "batteries",
+      "tags": [
+        "18650",
+        "salvage",
+        "battery-testing"
+      ],
+      "description": "Hands-on workflow for salvaging, testing and sorting used 18650s, then building them into a pack.",
+      "file": "batteries/18650-salvage-test-sort-pack.mp4",
+      "attribution": "“18650 Salvage, Testing, Sorting, & Making Pack” by richardhroth (https://www.youtube.com/@richardhroth), https://www.youtube.com/watch?v=E_11eyYvp2M, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    },
+    {
+      "id": "salvaged-tesla-module-bms",
+      "youtube_id": "4veRBtg6rno",
+      "title": "Salvaged Tesla Batteries for Off-Grid Power?",
+      "url": "https://www.youtube.com/watch?v=4veRBtg6rno",
+      "creator": "Overkill Solar Channel",
+      "creator_url": "https://www.youtube.com/@OverkillSolarLLC",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 679,
+      "published": "2023-03-20",
+      "topic": "batteries",
+      "tags": [
+        "tesla",
+        "bms",
+        "salvage",
+        "lithium"
+      ],
+      "description": "How to fit a BMS to a used Tesla EV module so it can be used as an off-grid battery.",
+      "file": "batteries/salvaged-tesla-module-bms.mp4",
+      "attribution": "“Salvaged Tesla Batteries for Off-Grid Power?” by Overkill Solar Channel (https://www.youtube.com/@OverkillSolarLLC), https://www.youtube.com/watch?v=4veRBtg6rno, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    },
+    {
+      "id": "starlink-power-use-12h-test",
+      "youtube_id": "HPMgruSja8E",
+      "title": "How much power does Starlink really use [SURPRISE]",
+      "url": "https://www.youtube.com/watch?v=HPMgruSja8E",
+      "creator": "Programmer Offgrid",
+      "creator_url": "https://www.youtube.com/@ProgrammerOffgrid",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_checked": "2026-11-19 (YouTube: \"Creative Commons Attribution license (reuse allowed)\")",
+      "duration_s": 712,
+      "published": "2025-03-13",
+      "topic": "starlink-off-grid",
+      "tags": [
+        "starlink",
+        "power-consumption",
+        "12v"
+      ],
+      "description": "A 12-hour measured power-consumption test of Starlink, aimed at off-grid use.",
+      "file": "starlink-off-grid/starlink-power-use-12h-test.mp4",
+      "attribution": "“How much power does Starlink really use [SURPRISE]” by Programmer Offgrid (https://www.youtube.com/@ProgrammerOffgrid), https://www.youtube.com/watch?v=HPMgruSja8E, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded at reduced resolution for offline use; no other changes."
+    }
+  ]
+}

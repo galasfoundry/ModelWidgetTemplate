@@ -4,7 +4,13 @@
 > offline UK maps, how-to video, guides and local-model library for a 4 GB
 > laptop. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
 > look at, run `python scripts/fetch_demo_map.py` once while online, then open
-> http://127.0.0.1:5000/maps . Content goes
+> http://127.0.0.1:5000/maps . For videos, `pip install yt-dlp` and run
+> `python scripts/fetch_videos.py` once (seven Creative Commons videos on
+> off-grid hydro, batteries and Starlink power, about 290 MB at 360p; credits in
+> [library/videos/README.md](library/videos/README.md)). For the original
+> "Head and flow" episode, copy the `.mp4` into `library/videos/originals/`
+> (the sidecar and subtitles are already in the repo). Then open
+> http://127.0.0.1:5000/videos . Content goes
 > in `library/` (maps, videos, guides); see
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layout, routes, how to
 > add map packs and videos, the roadmap and known issues (including the
@@ -347,8 +353,9 @@ static/                     page styles and the fetch client
 weights/                    local snapshots, not committed
 firstbook/                  The First Book: library paths, maps, videos, guides, routes
 config/maps_catalog.json    known UK map packs, sources and licences
-modelwidget/gguf.py         planned llama.cpp GGUF backend (stub)
-scripts/                    build_video_manifest.py
+config/videos_catalog.json  Creative Commons videos with credits
+modelwidget/gguf.py         llama.cpp backend for GGUF models (optional)
+scripts/                    download_models.py, fetch_demo_map.py, fetch_videos.py, build_video_manifest.py
 library/                    offline content: maps/, videos/, guides/
 docs/ARCHITECTURE.md        The First Book structure and roadmap
 ```

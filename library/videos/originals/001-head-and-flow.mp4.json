@@ -1,0 +1,26 @@
+{
+  "file": "originals/001-head-and-flow.mp4",
+  "title": "Head and flow: how much power is in your stream?",
+  "topic": "power",
+  "tags": [
+    "hydro",
+    "micro-hydro",
+    "pico-hydro",
+    "off-grid",
+    "measurement",
+    "starlink",
+    "first-book-originals"
+  ],
+  "duration_s": 119.1,
+  "description": "An original animated explainer. Hydro power comes from two numbers, head and flow. P = rho x g x Q x H x efficiency, a worked example for a small UK hill stream (5 L/s and 10 m head gives about 245 W), how to measure flow with a bucket and head with a water-filled hose, and a rule of thumb you can do in your head.",
+  "source": "The First Book / galasfoundry (First Book Originals #001, original animation)",
+  "license": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "creator": "The First Book / galasfoundry",
+  "creator_url": "https://github.com/galasfoundry/ModelWidgetTemplate",
+  "attribution": "“Head and flow: how much power is in your stream?” by The First Book / galasfoundry, licensed CC BY 4.0",
+  "subtitles": "001-head-and-flow.srt",
+  "episode": "001",
+  "narration_voice": "Piper TTS, en_GB 'cori' (high); dataset public domain (LibriVox)",
+  "fact_check": "Fact-checked by Murder, 19 Nov 2026. PASS WITH FIXES applied."
+}

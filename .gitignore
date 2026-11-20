@@ -27,6 +27,12 @@ library/maps/*
 library/videos/*
 !library/videos/README.md
 !library/videos/videos.example.json
+# Original episode sidecars and subtitles are in git; the .mp4 files are not.
+!library/videos/originals/
+library/videos/originals/*
+!library/videos/originals/*.json
+!library/videos/originals/*.srt
+!library/videos/originals/README.md
 
 # Setup tools downloaded by scripts/fetch_demo_map.py (pmtiles CLI).
 tools/
