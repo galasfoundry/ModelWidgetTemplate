@@ -180,6 +180,18 @@ def evaluate(entry: dict, caps: dict, weights_dir: Path) -> dict:
     status = entry.get("status", "available")
     if status == "planned":
         download_blockers.append("planned: not downloadable yet")
+    gguf_name = str(entry.get("gguf_file") or "")
+    if gguf_name:
+        # Lazy import: discover imports this module.
+        from modelwidget.discover import is_sidecar_gguf
+
+        if is_sidecar_gguf(gguf_name):
+            note = (
+                "this file is a drafter or projector beside the model, not a chat model "
+                "the app can run"
+            )
+            reasons.append(note)
+            download_blockers.append(note)
 
     backend = entry["backend"]
     if caps.get("backends", {}).get(backend) is False:

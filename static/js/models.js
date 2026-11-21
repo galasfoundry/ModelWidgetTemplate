@@ -269,10 +269,11 @@ function discoverItem(row) {
   desc.textContent = bits.join(" · ");
   item.appendChild(desc);
 
-  if (row.reason) {
+  const note = row.warning || row.reason;
+  if (note) {
     const why = document.createElement("p");
     why.className = "extra";
-    why.textContent = row.reason;
+    why.textContent = note;
     item.appendChild(why);
   }
 
