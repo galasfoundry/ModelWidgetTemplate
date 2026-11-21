@@ -5,7 +5,10 @@ is queried for llama.cpp-compatible GGUF files, each candidate is labelled
 fits / tight / won't fit from this machine's RAM and free disk, and a pick
 is written to ``config/models_user.json`` (gitignored), never the curated
 catalog. Search results are cached on disk so a previous search still
-shows when Hugging Face cannot be reached.
+shows when Hugging Face cannot be reached. Projector and drafter files
+(mmproj, DSpark) are not offered as the chat model. A full-precision file
+that will not fit says so, and a smaller quant such as Q4_K_M is preferred
+when the repo has one.
 
 No token is required for public repos. ``HF_TOKEN`` (or
 ``HUGGING_FACE_HUB_TOKEN``) is used only for gated repos.
@@ -68,11 +71,15 @@ _QUANT_RE = re.compile(
     r"|F16|BF16|FP16|F32))(?:[-_.]|$)",
     re.I,
 )
+# Projectors, drafters and other sidecars are not the chat model. A DSpark
+# BF16 drafter is small enough to look like it fits a 4 GB laptop, and it is
+# not something llama.cpp can run as chat.
 _SKIP_FILE_RE = re.compile(
     r"(mmproj|mm-proj|projector|embed(?:ding)?|clip|eva-?clip|"
-    r"encoder|lora|imatrix|000\d+-of-000\d+)",
+    r"encoder|lora|imatrix|000\d+-of-000\d+|dspark|drafter)",
     re.I,
 )
+_FULL_PRECISION = {"BF16", "F16", "F32"}
 _CHAT_HINTS = ("instruct", "chat", "-it-", "-it_", "-it/", "it-gguf", "assistant", "conversational")
 _NOT_CHAT_HINTS = (
     "embed",
@@ -173,7 +180,8 @@ def assess_fit(size_mb: float, caps: dict) -> tuple[str, float, str]:
         if estimate > ceiling:
             label = "won't fit"
             reasons.append(
-                f"needs about {estimate:.0f} MB RAM, 70% of this machine is {ceiling:.0f} MB"
+                f"too big for this machine: the file is {size_mb:.0f} MB and needs about "
+                f"{estimate / 1024:.1f} GB of RAM, this computer has {total_gb:.1f} GB"
             )
         elif estimate > comfort:
             label = "tight"
@@ -194,13 +202,24 @@ def _quant_of(filename: str) -> str | None:
     return None if match is None else match.group(1).upper().replace("FP16", "F16")
 
 
+def _canonical_quant(quant: str) -> str:
+    """Quant name used for preference. Unsloth dynamic quants are ``UD-Q4_K_M``."""
+    name = (quant or "").upper()
+    if name.startswith("UD-"):
+        name = name[3:]
+    return name
+
+
+def is_sidecar_gguf(filename: str) -> bool:
+    """True for a projector, drafter or other GGUF that is not the chat model."""
+    return bool(_SKIP_FILE_RE.search(Path(str(filename)).name))
+
+
 def _usable_gguf(path: str) -> bool:
     name = Path(path).name
     if not name.lower().endswith(".gguf"):
         return False
-    if _SKIP_FILE_RE.search(name):
-        return False
-    return True
+    return not is_sidecar_gguf(name)
 
 
 def _looks_chat(repo_id: str, tags: list[str], pipeline: str | None, task: str) -> bool:
@@ -250,6 +269,29 @@ def _large_for_machine(repo_id: str) -> bool:
     return _LARGE_PARAM_RE.search(repo_id.replace("-", " ").replace("_", " ")) is not None
 
 
+def _finish_pick(item: dict, label: str, estimate: float, reason: str) -> dict:
+    """One chosen file. Full-precision and unlabelled files that will not fit say so."""
+    text = reason
+    canon = _canonical_quant(item["quant"])
+    if label == "won't fit" and canon in _FULL_PRECISION | {"UNKNOWN"}:
+        text = (
+            f"{reason}. A smaller quant such as Q4_K_M is the better download "
+            "when this repo offers one."
+        )
+    picked = {
+        "path": item["path"],
+        "size": item["size"],
+        "size_mb": item["size_mb"],
+        "quant": item["quant"],
+        "fit": label,
+        "estimated_ram_mb": round(estimate, 1),
+        "reason": text,
+    }
+    if label == "won't fit":
+        picked["warning"] = text
+    return picked
+
+
 def _pick_file(files: list[dict], caps: dict) -> dict | None:
     """Choose the best quant that fits this machine from ``{path, size}`` files."""
     scored: list[tuple[int, dict, str, float, str]] = []
@@ -271,19 +313,12 @@ def _pick_file(files: list[dict], caps: dict) -> dict | None:
     def take(names: tuple[str, ...], allowed: set[str]) -> dict | None:
         for preferred in names:
             for _, item, label, estimate, reason in scored:
-                if item["quant"] == preferred and label in allowed:
-                    return {
-                        "path": item["path"],
-                        "size": item["size"],
-                        "size_mb": item["size_mb"],
-                        "quant": item["quant"],
-                        "fit": label,
-                        "estimated_ram_mb": round(estimate, 1),
-                        "reason": reason,
-                    }
+                if _canonical_quant(item["quant"]) == preferred and label in allowed:
+                    return _finish_pick(item, label, estimate, reason)
         return None
 
     # Prefer Q4_K_M (even if tight), then Q4_0 / Q3. Q5 / Q8 only when comfortable.
+    # UD-Q4_K_M counts as Q4_K_M. Sidecars were already dropped.
     picked = (
         take(PREFERRED_QUANTS, {"fits", "tight"})
         or take(SPARE_QUANTS, {"fits"})
@@ -292,22 +327,15 @@ def _pick_file(files: list[dict], caps: dict) -> dict | None:
     )
     if picked:
         return picked
-    # Last resort: the smallest remaining file (F16 etc.).
+    # Last resort: the smallest remaining file (a bare .gguf, or F16 / BF16).
     _, item, label, estimate, reason = min(scored, key=lambda row: row[1]["size"])
-    return {
-        "path": item["path"],
-        "size": item["size"],
-        "size_mb": item["size_mb"],
-        "quant": item["quant"],
-        "fit": label,
-        "estimated_ram_mb": round(estimate, 1),
-        "reason": reason,
-    }
+    return _finish_pick(item, label, estimate, reason)
 
 
 def _slug(hf_id: str, quant: str) -> str:
     name = hf_id.split("/", 1)[-1]
-    raw = f"{name}-{quant}".lower()
+    token = quant if quant and str(quant).upper() != "UNKNOWN" else "gguf"
+    raw = f"{name}-{token}".lower()
     slug = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
     slug = re.sub(r"-gguf-", "-", slug)
     slug = re.sub(r"-{2,}", "-", slug)
@@ -318,6 +346,8 @@ def _display_name(hf_id: str, quant: str) -> str:
     name = hf_id.split("/", 1)[-1]
     name = re.sub(r"-?GGUF$", "", name, flags=re.I)
     name = name.replace("-", " ").replace("_", " ")
+    if not quant or str(quant).upper() == "UNKNOWN":
+        return f"{name} (GGUF)"
     return f"{name} (GGUF {quant})"
 
 
@@ -449,6 +479,7 @@ def search_models(
             "estimated_ram_mb": picked["estimated_ram_mb"],
             "fit": picked["fit"],
             "reason": picked["reason"],
+            "warning": picked.get("warning") or "",
             "downloads": listing.get("downloads") or 0,
             "likes": listing.get("likes") or 0,
             "license": licence,
