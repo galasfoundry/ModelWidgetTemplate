@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--remote", action="store_true", help="build a firstbook.library.v1 manifest for publishing")
     parser.add_argument(
         "--base-url",
-        default=remote_library.PLACEHOLDER_LIBRARY_URL,
+        default=remote_library.DEFAULT_LIBRARY_URL,
         help="base URL prepended to file paths (or filenames with --url-mode flat)",
     )
     parser.add_argument(

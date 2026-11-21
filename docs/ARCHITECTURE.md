@@ -233,14 +233,14 @@ resume. Already-present files keep playing with no network. If the
 manifest cannot be reached, the page keeps working from disk and shows
 when the manifest was last checked.
 
-The default URL is a GitHub Releases **placeholder**
-(`…/releases/download/library-placeholder/`), not a live library. Point
-`FIRSTBOOK_LIBRARY_URL` at a real host when you have one. Publishing a
-new episode is: render the files, run
+The default URL is the live GitHub Release `library-v1`
+(`https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/`).
+Publishing a new episode is: render the files, run
 `python scripts/build_video_manifest.py --remote --base-url URL -o manifest.json`,
 upload the files and the manifest. No app code change, and no videos in
 git. Hosting options (GitHub Releases, the Internet Archive, later a
-self-hosted server) are in `docs/REMOTE_VIDEO_LIBRARY.md`.
+self-hosted server) are in `docs/REMOTE_VIDEO_LIBRARY.md`. A URL that
+still contains `library-placeholder` is treated as not live.
 
 ## Guides
 

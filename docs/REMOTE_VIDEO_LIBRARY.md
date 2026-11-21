@@ -11,7 +11,7 @@ Set these in `config/.env` or the shell:
 
 | Variable | Meaning |
 | --- | --- |
-| `FIRSTBOOK_LIBRARY_URL` | Base URL of the remote library. The manifest is `{base}/manifest.json` unless the value itself ends in `.json`. Default: `https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-placeholder/` (a **placeholder**, not a live host). |
+| `FIRSTBOOK_LIBRARY_URL` | Base URL of the remote library. The manifest is `{base}/manifest.json` unless the value itself ends in `.json`. Default: `https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/` (the published **library-v1** release). |
 | `FIRSTBOOK_LIBRARY_MANIFEST` | Optional override: a local file path or a direct URL to the manifest. Useful for tests and for a USB copy of the catalog. |
 
 ## Manifest
@@ -20,7 +20,9 @@ Schema id: `firstbook.library.v1`. Each video lists `id`, `title`,
 `topic`, `license`, `credit`, `source_url`, file `url`, `size`,
 `sha256`, `duration_s`, `subtitles_url`, and a `sidecar` object of extra
 metadata (description, tags, creator, fact-check notes, and so on). See
-`docs/remote-manifest.example.json`.
+`docs/remote-manifest.example.json` for the shape. The hashes in that
+file are illustrative. The live manifest is the `manifest.json` asset on
+the `library-v1` release.
 
 Build it from local files (hashes, sizes, sidecar and catalog metadata):
 
@@ -51,24 +53,26 @@ and shows when the manifest was last checked (`library/videos/.library-state.jso
 `scripts/fetch_videos.py` (yt-dlp) stays as a fallback for the
 third-party Creative Commons catalog in `config/videos_catalog.json`.
 
-## Hosting options (placeholders, then your own server)
+## Hosting options
 
 ### GitHub Releases (free, 2 GB per file)
 
-A simple starting point for The First Book originals and other modest
-files. Create a release on `galasfoundry/ModelWidgetTemplate` (for
-example tag `library-v1`), upload each `.mp4`, `.srt` and `manifest.json`
-as release assets, and set:
+The first library is published on `galasfoundry/ModelWidgetTemplate` as
+tag `library-v1` (release name "First Book video library v1"). It is a
+normal published release, not a draft or a prerelease. The app default is:
 
 ```bash
 FIRSTBOOK_LIBRARY_URL=https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/
 ```
 
+That release holds each `.mp4`, `.srt` and `manifest.json` as assets.
 Build the manifest with `--url-mode flat`. GitHub does not allow folders
 in a release, so two files cannot share a filename even if they would
 live in different topics. The 2 GB-per-file limit is the practical cap;
-watch the account's release bandwidth as the library grows. Replace the
-`library-placeholder` default only when this release actually exists.
+watch the account's release bandwidth as the library grows. A URL that
+still contains `library-placeholder` is treated as not live. `library-v1`
+ships the two First Book originals. The Creative Commons YouTube catalog
+was not included: YouTube blocked the fetch when the release was built.
 
 ### Internet Archive (good for Creative Commons)
 

@@ -18,10 +18,10 @@ licence.
 
 ## Remote library (primary path)
 
-The usual way to fill this folder, once a host is configured, is the
-**Download library** button on `/videos`. It fetches a versioned manifest
-from `FIRSTBOOK_LIBRARY_URL` (default: a GitHub Releases placeholder under
-galasfoundry, not a live host), shows what is new or updated, and
+The usual way to fill this folder is the **Download library** button on
+`/videos`. It fetches a versioned manifest from `FIRSTBOOK_LIBRARY_URL`
+(default: the live GitHub Release `library-v1` on
+galasfoundry/ModelWidgetTemplate), shows what is new or updated, and
 downloads the files with resume and sha256 checks. Already-present videos
 keep playing offline. See [docs/REMOTE_VIDEO_LIBRARY.md](../../docs/REMOTE_VIDEO_LIBRARY.md)
 for the manifest schema, how to publish with

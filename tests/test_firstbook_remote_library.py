@@ -179,13 +179,19 @@ def test_load_manifest_from_local_file(tmp_path, monkeypatch):
     assert remote_library.library_settings().manifest_url == str(path)
 
 
-def test_placeholder_default_is_clearly_marked(monkeypatch):
+def test_default_library_url_is_the_live_release(monkeypatch):
     monkeypatch.delenv("FIRSTBOOK_LIBRARY_URL", raising=False)
     monkeypatch.delenv("FIRSTBOOK_LIBRARY_MANIFEST", raising=False)
     settings = remote_library.library_settings()
-    assert settings.is_placeholder
-    assert "library-placeholder" in settings.base_url
-    assert settings.manifest_url.endswith("/manifest.json")
+    assert settings.is_placeholder is False
+    assert settings.base_url == remote_library.DEFAULT_LIBRARY_URL
+    assert settings.base_url == (
+        "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/"
+    )
+    assert settings.manifest_url == settings.base_url + "manifest.json"
+    # A leftover placeholder URL is still flagged, and is not the default.
+    assert remote_library.is_placeholder_url(remote_library.PLACEHOLDER_LIBRARY_URL)
+    assert "library-placeholder" in remote_library.PLACEHOLDER_LIBRARY_URL
 
 
 def test_sha_mismatch_rejects_and_leaves_existing_file(hosted, tmp_path):
