@@ -1,0 +1,33 @@
+{
+  "repo": "IndrasMirror/Inkling-2-Mini-XQ-Uncensored",
+  "sha": "e2a54ac8ca34b6fe9ac722094b9a020654f63832",
+  "listing": {
+    "id": "IndrasMirror/Inkling-2-Mini-XQ-Uncensored",
+    "downloads": 258,
+    "likes": 5,
+    "pipeline_tag": "text-generation",
+    "gated": false,
+    "tags": ["gguf", "text-generation", "conversational", "license:apache-2.0", "uncensored"]
+  },
+  "detail": {
+    "id": "IndrasMirror/Inkling-2-Mini-XQ-Uncensored",
+    "sha": "e2a54ac8ca34b6fe9ac722094b9a020654f63832",
+    "gated": false,
+    "pipeline_tag": "text-generation",
+    "tags": ["gguf", "text-generation", "conversational", "license:apache-2.0"],
+    "cardData": {"license": "apache-2.0"}
+  },
+  "tree": [
+    {"type": "file", "path": ".gitattributes", "size": 1752},
+    {"type": "file", "path": "Inkling-2-Mini-XQ-Uncensored-DSpark-BF16.gguf", "size": 647792800},
+    {"type": "file", "path": "Inkling-2-Mini-XQ-Uncensored.gguf", "size": 13934408416},
+    {"type": "file", "path": "README.md", "size": 9457},
+    {"type": "file", "path": "mmproj-Inkling-2-Mini-XQ-Uncensored-F16.gguf", "size": 639348512}
+  ],
+  "q4_over_bf16": [
+    {"path": "Inkling-2-Mini-BF16.gguf", "size": 53687091200},
+    {"path": "Inkling-2-Mini-UD-Q4_K_M.gguf", "size": 838860800},
+    {"path": "dspark-Inkling-2-Mini-Q8_0.gguf", "size": 419430400},
+    {"path": "mmproj-Inkling-2-Mini-BF16.gguf", "size": 671088640}
+  ]
+}

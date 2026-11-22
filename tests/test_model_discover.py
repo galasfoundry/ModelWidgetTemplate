@@ -389,3 +389,82 @@ def test_discover_api_and_cli(tmp_path, monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "Llama-3.2-1B" in output
     assert "Q4_K_M" in output
+
+
+def _inkling():
+    return _load("inkling.json")
+
+
+def test_inkling_search_skips_bf16_drafter_and_warns(tmp_path):
+    """The reported download was the small DSpark BF16 sidecar, not the model.
+
+    That file finishes quickly and then cannot run as chat. The real GGUF in
+    the same repo is far too big for 4 GB RAM, and the search should say so
+    instead of offering the drafter.
+    """
+    pack = _inkling()
+    repo = pack["repo"]
+
+    def fetch(url, token=None, timeout=20):
+        parsed = urlparse(url)
+        path = unquote(parsed.path)
+        if path == "/api/models":
+            return [pack["listing"]]
+        if path.endswith("/tree") or "/tree/" in path:
+            return pack["tree"]
+        if path.startswith("/api/models/"):
+            return pack["detail"]
+        raise DiscoveryError(f"unexpected url {url}")
+
+    payload = discover.search_models("inkling", CAPS_4G, fetch=fetch, catalog_file=_catalog(tmp_path))
+    assert [row["hf_id"] for row in payload["results"]] == [repo]
+    row = payload["results"][0]
+    assert row["gguf_file"] == "Inkling-2-Mini-XQ-Uncensored.gguf"
+    assert "DSpark" not in row["gguf_file"] and "mmproj" not in row["gguf_file"]
+    assert row["name"] == "Inkling 2 Mini XQ Uncensored (GGUF)"
+    assert "BF16" not in row["name"]
+    assert row["fit"] == "won't fit"
+    assert "too big for this machine" in row["warning"]
+    assert "4.0 GB" in row["warning"]
+    assert "Q4_K_M" in row["warning"]
+    with pytest.raises(DiscoveryError, match="won't fit"):
+        discover.add_candidate(row, _catalog(tmp_path))
+
+
+def test_smaller_quant_is_suggested_ahead_of_bf16_and_drafters():
+    files = _inkling()["q4_over_bf16"]
+    picked = discover._pick_file(files, CAPS_4G)
+    assert picked["path"] == "Inkling-2-Mini-UD-Q4_K_M.gguf"
+    assert picked["quant"] == "UD-Q4_K_M"
+    assert picked["fit"] == "fits"
+    assert "dspark" not in picked["path"].lower()
+
+
+def test_sidecar_already_in_the_catalog_is_not_runnable(tmp_path, monkeypatch):
+    """A BF16 drafter downloaded before this fix must not be offered as a chat model."""
+    drafter = {
+        "id": "user-inkling-2-mini-xq-uncensored-bf16",
+        "name": "Inkling 2 Mini XQ Uncensored (GGUF BF16)",
+        "hf_id": "IndrasMirror/Inkling-2-Mini-XQ-Uncensored",
+        "revision": "e2a54ac8ca34b6fe9ac722094b9a020654f63832",
+        "gguf_file": "Inkling-2-Mini-XQ-Uncensored-DSpark-BF16.gguf",
+        "task": "text-generation",
+        "backend": "llama_cpp",
+        "status": "downloadable",
+        "approx_size_mb": 618,
+        "min_ram_gb": 2,
+    }
+    catalog_file = _catalog(tmp_path, [drafter])
+    monkeypatch.setattr("app.detect_capabilities", lambda weights_dir: CAPS_4G)
+    client = create_app(settings=_settings(tmp_path), catalog_file=catalog_file).test_client()
+    listing = client.get("/api/models").get_json()
+    assert [row["id"] for row in listing["models"]] == []
+    excluded = {row["id"]: row for row in listing["excluded"]}
+    assert drafter["id"] in excluded
+    assert excluded[drafter["id"]]["downloadable"] is False
+    assert any("drafter" in reason for reason in excluded[drafter["id"]]["reasons"])
+    refused = client.post(f"/api/models/{drafter['id']}/download")
+    assert refused.status_code == 409
+    select = client.post("/api/models/select", json={"id": drafter["id"]})
+    assert select.status_code == 409
+    assert "drafter" in select.get_json()["error"]
