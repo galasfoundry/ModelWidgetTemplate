@@ -41,3 +41,6 @@ library/maps/*.part
 # User-added models and cached Hugging Face discovery results.
 config/models_user.json
 config/models_discover_cache.json
+
+# Hosted chat API key. Copy config/hosted.example.json to this name.
+config/hosted.local.json

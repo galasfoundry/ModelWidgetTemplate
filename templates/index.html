@@ -44,6 +44,14 @@
       <p id="picker-status" role="status"></p>
     </section>
 
+    <section id="hosted-option" aria-labelledby="hosted-title">
+      <h2 id="hosted-title">Hosted chat</h2>
+      <p>Models that will not fit in this computer's memory can be tried through OpenRouter. Your message is sent to their servers. Nothing is downloaded onto this laptop.</p>
+      <p class="meta">A free key is enough for the free models. Save it as OPENROUTER_API_KEY in config/.env, or as api_key in config/hosted.local.json (copy the example file). That file is not committed. Restart the app after editing config/.env. The chat page names the site and the daily limit.</p>
+      <p id="hosted-status" class="meta">Checking whether a key is set…</p>
+      <p><a href="{{ url_for('firstbook.chat_page', hosted=1) }}">Open hosted chat</a></p>
+    </section>
+
     <section id="model-discover" aria-labelledby="discover-title">
       <h2 id="discover-title">Discover</h2>
       <p class="meta">Search Hugging Face for GGUF chat models this machine can run. Results are cached, so a previous search still shows when you are offline.</p>

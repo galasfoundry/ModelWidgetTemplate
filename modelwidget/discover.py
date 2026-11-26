@@ -12,6 +12,11 @@ when the repo has one.
 
 No token is required for public repos. ``HF_TOKEN`` (or
 ``HUGGING_FACE_HUB_TOKEN``) is used only for gated repos.
+
+Repos whose names say 11B parameters or more are not offered for download.
+They are returned in ``too_big`` (fit ``won't fit``) so the page can offer
+hosted chat, and they stay out of ``results`` so smaller models are not
+crowded out.
 """
 
 from __future__ import annotations
@@ -33,6 +38,7 @@ USER_AGENT = "TheFirstBook/0.1 (offline model discovery)"
 DEFAULT_QUERY = "1b instruct"
 DEFAULT_LIMIT = 25
 RESULT_LIMIT = 15
+TOO_BIG_LIMIT = 8
 TREE_TIMEOUT = 20
 SEARCH_TIMEOUT = 20
 
@@ -62,7 +68,8 @@ PREFERRED_QUANTS = (
 # Only chosen when the estimate is comfortably under half of total RAM.
 SPARE_QUANTS = ("Q5_K_M", "Q5_K_S", "Q5_0", "Q6_K", "Q8_0")
 
-# Parameter counts at or above this are skipped without a file-tree fetch.
+# Parameter counts at or above this are not offered for local download.
+# They are listed separately (too_big) so hosted chat can still be offered.
 _LARGE_PARAM_RE = re.compile(r"(?:^|[^0-9])(1[1-9]|[2-9]\d|\d{3,})\s*B\b", re.I)
 _QUANT_RE = re.compile(
     r"(?:^|[-_.])((?:UD-)?"
@@ -390,6 +397,41 @@ def _flatten_tree(nodes, prefix: str = "") -> list[dict]:
     return files
 
 
+def _hosted_only_row(repo_id: str, listing: dict, tags: list[str]) -> dict:
+    """A model that is too large to download. The page offers hosted chat instead."""
+    licence = None
+    for tag in tags:
+        text = str(tag)
+        if text.lower().startswith("license:"):
+            licence = text.split(":", 1)[1]
+            break
+    reason = (
+        "Too big to run on this machine. It is not offered as a download. "
+        "Try hosted chat if you want to talk to a model of this size."
+    )
+    return {
+        "hf_id": repo_id,
+        "name": _display_name(repo_id, ""),
+        "revision": "",
+        "gguf_file": "",
+        "gguf_path": "",
+        "quant": "",
+        "approx_size_mb": None,
+        "estimated_ram_mb": None,
+        "fit": "won't fit",
+        "reason": reason,
+        "warning": reason,
+        "downloads": listing.get("downloads") or 0,
+        "likes": listing.get("likes") or 0,
+        "license": licence,
+        "gated": _is_gated(listing.get("gated")),
+        "pipeline_tag": listing.get("pipeline_tag"),
+        "suggested_id": "",
+        "in_catalog": None,
+        "hosted_only": True,
+    }
+
+
 def _already_in_catalog(hf_id: str, gguf_file: str, catalog_file: Path | None) -> dict | None:
     try:
         data = catalog.load_catalog(catalog_file)
@@ -422,6 +464,7 @@ def search_models(
 
     results: list[dict] = []
     skipped: list[dict] = []
+    too_big: list[dict] = []
     for listing in listings:
         if not isinstance(listing, dict) or not listing.get("id"):
             continue
@@ -436,6 +479,9 @@ def search_models(
             continue
         if _large_for_machine(repo_id):
             skipped.append({"id": repo_id, "reason": "parameter count is too large for this kind of machine"})
+            gated_listing = _is_gated(listing.get("gated"))
+            if not (gated_listing and not token) and len(too_big) < TOO_BIG_LIMIT:
+                too_big.append(_hosted_only_row(repo_id, listing, tags))
             continue
 
         try:
@@ -499,6 +545,7 @@ def search_models(
         "task": task,
         "results": results,
         "skipped": skipped,
+        "too_big": too_big,
         "online": True,
         "cached": False,
     }
@@ -580,6 +627,7 @@ def discover(
                 "task": task,
                 "results": [],
                 "skipped": [],
+                "too_big": [],
                 "online": False,
                 "cached": False,
                 "cached_at": None,
@@ -604,6 +652,7 @@ def discover(
             "task": cached.get("task") or task,
             "results": cached.get("results") or [],
             "skipped": cached.get("skipped") or [],
+            "too_big": cached.get("too_big") or [],
             "online": False,
             "cached": True,
             "cached_at": cached.get("saved_at"),

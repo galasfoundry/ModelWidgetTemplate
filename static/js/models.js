@@ -232,9 +232,12 @@ function ageLabel(seconds) {
 }
 
 function discoverStatusText(payload) {
+  const big = (payload.too_big || []).length;
+  const bigBit = big ? ` ${big} more are too big for this machine; use Try hosted.` : "";
   if (payload.online) {
     const n = (payload.results || []).length;
-    return n ? `${n} model(s) for "${payload.query}".` : `No GGUF chat models found for "${payload.query}".`;
+    const base = n ? `${n} model(s) for "${payload.query}".` : `No GGUF chat models found for "${payload.query}".`;
+    return base + bigBit;
   }
   const age = ageLabel(payload.cache_age_seconds);
   const cacheBit = payload.cached
@@ -253,7 +256,11 @@ function discoverItem(row) {
   head.appendChild(name);
   const badge = document.createElement("span");
   badge.className = "badge fit-" + (row.fit === "won't fit" ? "wont" : row.fit || "");
-  badge.textContent = `${row.fit || "?"} · ${row.quant || "?"} · ~${row.approx_size_mb} MB`;
+  const quant = row.quant || (row.hosted_only ? "too big" : "?");
+  const size = row.approx_size_mb == null || row.approx_size_mb === ""
+    ? "too big to download"
+    : `~${row.approx_size_mb} MB`;
+  badge.textContent = `${row.fit || "?"} · ${quant} · ${size}`;
   head.appendChild(badge);
   item.appendChild(head);
 
@@ -288,6 +295,12 @@ function discoverItem(row) {
     add.textContent = "Add to catalog";
     add.addEventListener("click", () => addDiscovered(row, add));
     item.appendChild(add);
+  }
+  if (row.fit === "won't fit" && row.hf_id) {
+    const link = document.createElement("a");
+    link.href = "/chat?hosted=1&hf_id=" + encodeURIComponent(row.hf_id);
+    link.textContent = "Try hosted";
+    item.appendChild(link);
   }
   return item;
 }
@@ -329,7 +342,19 @@ async function runDiscover(query, quiet) {
       return;
     }
     discoverStatus.textContent = discoverStatusText(payload);
-    discoverList.replaceChildren(...(payload.results || []).map(discoverItem));
+    const nodes = (payload.results || []).map(discoverItem);
+    const big = payload.too_big || [];
+    if (big.length) {
+      const note = document.createElement("li");
+      note.className = "picker-item";
+      const line = document.createElement("p");
+      line.className = "extra";
+      line.textContent = "Too big for this computer. These are not downloaded. Try hosted sends the chat to OpenRouter.";
+      note.appendChild(line);
+      nodes.push(note);
+      for (const row of big) nodes.push(discoverItem(row));
+    }
+    discoverList.replaceChildren(...nodes);
   } catch (error) {
     discoverStatus.textContent = "Could not reach the local server.";
   } finally {
@@ -343,3 +368,18 @@ if (discoverForm) {
     runDiscover(discoverQ.value.trim(), false);
   });
 }
+
+const hostedStatus = document.querySelector("#hosted-status");
+
+async function loadHostedStatus() {
+  if (!hostedStatus) return;
+  try {
+    const response = await fetch("/api/chat/hosted/status");
+    const payload = await response.json();
+    hostedStatus.textContent = payload.message || (payload.configured ? "Hosted chat is ready." : "No API key yet.");
+  } catch (error) {
+    hostedStatus.textContent = "Could not check the hosted setup.";
+  }
+}
+
+loadHostedStatus();

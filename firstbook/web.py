@@ -1,5 +1,9 @@
 """Flask routes for The First Book sections: home, maps, videos, guides, chat, status.
 
+Hosted chat (OpenRouter) is an explicit online action, like a model download.
+It lives on ``/chat?hosted=1`` and ``/api/chat/hosted``. The local GGUF chat
+is unchanged.
+
 The model widget routes stay in ``app.py``; this blueprint only adds to them.
 Pages are deliberately bare (UI work is pending, see docs/ARCHITECTURE.md).
 """
@@ -14,7 +18,7 @@ from flask import Blueprint, Response, abort, current_app, jsonify, render_templ
 
 from firstbook import chat as chatlib, guides, maps, remote_library, videos
 from firstbook.library import Library, safe_child
-from modelwidget import catalog
+from modelwidget import catalog, hosted
 from modelwidget.capabilities import detect_capabilities
 
 
@@ -58,7 +62,13 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
 
     @bp.get("/chat")
     def chat_page():
-        return render_template("chat.html", chat=_chat_status())
+        hosted_view = None
+        if _hosted_requested():
+            hosted_view = _hosted_prepare(
+                request.args.get("hf_id", ""),
+                request.args.get("model", ""),
+            )
+        return render_template("chat.html", chat=_chat_status(), hosted=hosted_view)
 
     @bp.get("/guides")
     def guides_page():
@@ -251,6 +261,69 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # ---- hosted chat (OpenRouter; explicit online action) ------------------
+    @bp.get("/api/chat/hosted/status")
+    def api_hosted_status():
+        plan = _hosted_prepare(request.args.get("hf_id", ""), request.args.get("model", ""))
+        return jsonify(plan)
+
+    @bp.post("/api/chat/hosted")
+    def api_hosted_chat():
+        body = request.get_json(silent=True) or {}
+        if not isinstance(body, dict):
+            return jsonify({"error": "Send JSON with a messages list."}), 400
+        service = current_app.config["SERVICE"]
+        history = chatlib.normalize_history(body.get("messages"), service.settings.max_input_chars)
+        if not history or history[-1]["role"] != "user":
+            return jsonify({"error": "Send JSON {\"messages\": [{\"role\": \"user\", \"content\": \"...\"}]}."}), 400
+        hf_id = body.get("hf_id") if isinstance(body.get("hf_id"), str) else ""
+        model_id = body.get("model") if isinstance(body.get("model"), str) else ""
+        creds = _hosted_credentials()
+        plan = hosted.prepare(
+            creds,
+            hf_id=hf_id,
+            requested_model=model_id,
+            fetch=current_app.config.get("HOSTED_FETCH"),
+        )
+        if not plan["ready"]:
+            return jsonify({"error": plan["message"], "status": plan}), 409
+        messages = chatlib.trim_messages(
+            hosted.build_messages(history),
+            hosted.rough_token_count,
+            hosted.HOSTED_CONTEXT,
+            int(service.settings.chat_max_tokens),
+        )
+        token = creds.get("token") or ""
+        try:
+            lines = hosted.open_stream(
+                messages,
+                model=plan["model"],
+                token=token,
+                max_tokens=int(service.settings.chat_max_tokens),
+                post=current_app.config.get("HOSTED_POST"),
+            )
+        except hosted.HostedError as exc:
+            return jsonify({"error": hosted.scrub(str(exc), token)}), exc.status
+
+        stop_event = current_app.config.setdefault("CHAT_STOP", threading.Event())
+        stop_event.clear()
+
+        def generate_hosted():
+            try:
+                for delta in hosted.iter_deltas(lines, stop_event=stop_event):
+                    yield f"data: {json.dumps({'token': delta})}\n\n"
+                yield f"data: {json.dumps({'done': True, 'stopped': stop_event.is_set(), 'model': plan['model']})}\n\n"
+            except hosted.HostedError as exc:
+                yield f"data: {json.dumps({'error': hosted.scrub(str(exc), token)})}\n\n"
+            except Exception:
+                yield f"data: {json.dumps({'error': 'Hosted chat failed.'})}\n\n"
+
+        return Response(
+            stream_with_context(generate_hosted()),
+            mimetype="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     # ---- status ------------------------------------------------------------
     @bp.get("/api/status")
     def api_status():
@@ -272,6 +345,20 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
 
     def _library_status() -> dict:
         return remote_library.public_status(library.videos_dir, _library_downloads())
+
+    def _hosted_requested() -> bool:
+        return request.args.get("hosted", "").strip().lower() in {"1", "true", "yes", "on"}
+
+    def _hosted_credentials() -> dict:
+        return hosted.resolve_credentials(current_app.config.get("HOSTED_CONFIG_PATH"))
+
+    def _hosted_prepare(hf_id: str, model_id: str) -> dict:
+        return hosted.prepare(
+            _hosted_credentials(),
+            hf_id=hf_id,
+            requested_model=model_id,
+            fetch=current_app.config.get("HOSTED_FETCH"),
+        )
 
     def _chat_status() -> dict:
         from modelwidget.gguf import available
