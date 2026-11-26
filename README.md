@@ -1,8 +1,10 @@
 # Model widget template
 
-> **The First Book.** This repo is also the base of *The First Book*, a fully
-> offline UK maps, how-to video, guides and local-model library for a 4 GB
-> laptop. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
+> **The First Book.** This repo is also the base of *The First Book*, a
+> UK maps, how-to video, guides and local-model library for a 4 GB
+> laptop. After setup, maps, videos, guides and the small local models stay
+> on the machine. An optional hosted chat on the Models page can call a large
+> model over the internet when you give it an API key. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
 > look at, run `python scripts/fetch_demo_map.py` once while online, then open
 > http://127.0.0.1:5000/maps . For videos, use the Download library button
 > on http://127.0.0.1:5000/videos . The default host is the live GitHub
@@ -112,6 +114,8 @@ cp config/.env.example config/.env
 | `LABEL_MAP_PATH` | unset | Optional class-name JSON. A 1000-way timm head uses ImageNet-1k names |
 | `HF_HOME` / `HUGGINGFACE_HUB_CACHE` | the default hub cache | Extra place to reuse a snapshot |
 | `HF_TOKEN` | unset | Token for a gated or private repo |
+| `OPENROUTER_API_KEY` | unset | Key for hosted chat. See [Hosted chat](#hosted-chat-models-that-will-not-fit). Not committed |
+| `HOSTED_MODEL` | `openrouter/free` | Hosted model id. The default stays on OpenRouter's free list |
 
 After editing the repo id, run `python install_weights.py` again. The page asks `/api/info` and shows an image upload or a text box to match the task.
 
@@ -212,6 +216,36 @@ but shows a warning: close other apps first.
 | "401/403" or "gated" | That repo needs a Hugging Face account token: put `HF_TOKEN=...` in `config/.env`. The shipped catalog only uses public repos. |
 | GGUF model "cannot run here: backend 'llama_cpp' is not installed" | Install `llama-cpp-python` as above. The file is already downloaded. |
 | Files also in `~/.cache/huggingface` | Earlier versions or other tools may have used the global cache. This app reads both but downloads only into `weights/`. |
+
+## Hosted chat (models that will not fit)
+
+A 4 GB laptop cannot run a large model. The Models page can still let you
+talk to one through [OpenRouter](https://openrouter.ai). The conversation is
+sent to their servers. Maps, videos, guides and the small local models stay
+on this machine.
+
+Kaggle and Colab were not used. They give a free GPU, but only inside a
+notebook you run by hand. They do not give this app an address it can send
+a chat message to. Hugging Face's own router needs paid credits on a free
+account (a PRO plan is about $9 a month and includes about $2 of credits).
+OpenRouter gives you a key with no credit card, and a free router that picks
+a model that is free to call.
+
+### Set it up
+
+1. Open https://openrouter.ai/keys and create a key. The free models do not need a credit card.
+2. Put the key in one place, and do not commit it:
+   - In `config/.env` (copy `config/.env.example` if you do not have that file yet), add a line `OPENROUTER_API_KEY=sk-or-...`
+   - Or copy `config/hosted.example.json` to `config/hosted.local.json` and set `api_key`. That name is in `.gitignore`.
+3. A key in the environment wins over the JSON file. `HOSTED_MODEL` is optional. The default is `openrouter/free`, which stays on the free list.
+4. Restart `python app.py` if it was already running when you edited `config/.env`.
+5. Open http://127.0.0.1:5000/ and use **Open hosted chat**, or search under **Discover** and press **Try hosted** on a model marked "won't fit".
+
+If the key is missing, the chat page says so and does not crash. If OpenRouter does not serve that Hugging Face repo (most GGUF files are only a download, not a hosted model), the page says so and offers the general free chat instead.
+
+### Limits
+
+Free models are about 20 requests a minute and 50 a day. After the account has bought at least $10 of credits, the daily cap is about 1,000. A failed try still counts. The free model list changes, and a busy model can refuse a request even when your own cap is left. A model that is not on the free list can charge the credits on the key. The exact GGUF file from Hugging Face is not what runs: the app asks OpenRouter for a matching hosted model, or for the free router when there is no match.
 
 ## Pick a model from the page
 
@@ -359,6 +393,7 @@ firstbook/                  The First Book: library paths, maps, videos, remote 
 config/maps_catalog.json    known UK map packs, sources and licences
 config/videos_catalog.json  Creative Commons videos with credits (yt-dlp fallback)
 modelwidget/gguf.py         llama.cpp backend for GGUF models (optional)
+modelwidget/hosted.py       optional OpenRouter chat for models that will not fit
 scripts/                    download_models.py, fetch_demo_map.py, fetch_videos.py, build_video_manifest.py (--remote)
 library/                    offline content: maps/, videos/, guides/
 docs/ARCHITECTURE.md        The First Book structure and roadmap

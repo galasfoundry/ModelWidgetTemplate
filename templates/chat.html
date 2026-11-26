@@ -1,26 +1,44 @@
 {% extends "fb_base.html" %}
 {% block title %}Chat · The First Book{% endblock %}
 {% block content %}
+{% set form_ready = hosted.ready if hosted else chat.ready %}
 <h1>Chat</h1>
+{% if hosted %}
+<p class="meta">Hosted chat through OpenRouter. Your message is sent to their servers so a model that will not fit on this laptop can answer. Maps, videos, guides and any local model stay on this machine.</p>
+<div id="chat-panel" data-ready="{{ 'true' if hosted.ready else 'false' }}" data-backend="hosted" data-hf-id="{{ hosted.hf_id }}" data-model="{{ hosted.model }}">
+  <p id="chat-message">{{ hosted.message }}</p>
+  <p class="meta">{{ hosted.limits }}</p>
+  {% if not hosted.configured %}
+  <p><a href="{{ hosted.keys_url }}">Create a free OpenRouter key</a></p>
+  {% endif %}
+  {% if hosted.hf_id and not hosted.hosted %}
+  <p><a href="{{ url_for('firstbook.chat_page', hosted=1) }}">Use a free hosted model instead</a></p>
+  {% elif hosted.hosted and not hosted.free %}
+  <p><a href="{{ url_for('firstbook.chat_page', hosted=1) }}">Use the free hosted chat instead</a></p>
+  {% endif %}
+  <p><a href="{{ url_for('index') }}">Back to the model page</a></p>
+{% else %}
 <p class="meta">An offline assistant for UK survival and self-sufficiency. Replies stay on this machine.</p>
-<div id="chat-panel" data-ready="{{ 'true' if chat.ready else 'false' }}">
+<div id="chat-panel" data-ready="{{ 'true' if chat.ready else 'false' }}" data-backend="local">
   {% if not chat.ready %}
   <p id="chat-message">{{ chat.message }}</p>
   {% if chat.reason == "missing_backend" %}
   <pre id="chat-install"><code>{{ chat.install_command }}</code></pre>
   {% endif %}
   <p><a href="{{ url_for('index') }}">Open the model page</a></p>
+  <p><a href="{{ url_for('firstbook.chat_page', hosted=1) }}">Try a hosted model instead</a> if this one will not fit on this computer.</p>
   {% else %}
   <p id="chat-message" class="meta">{% if chat.active_chat_model %}Using {{ chat.active_chat_model }}.{% endif %} Context {{ chat.n_ctx }} tokens; replies up to {{ chat.chat_max_tokens }} tokens.</p>
   {% endif %}
+{% endif %}
   <ol id="transcript"></ol>
   <form id="chat-form">
     <label for="chat-input">Message</label>
-    <textarea id="chat-input" name="message" rows="3" {% if not chat.ready %}disabled{% endif %}></textarea>
+    <textarea id="chat-input" name="message" rows="3" {% if not form_ready %}disabled{% endif %}></textarea>
     <p>
-      <button type="submit" id="chat-send" {% if not chat.ready %}disabled{% endif %}>Send</button>
+      <button type="submit" id="chat-send" {% if not form_ready %}disabled{% endif %}>Send</button>
       <button type="button" id="chat-stop" disabled>Stop</button>
-      <button type="button" id="chat-clear" {% if not chat.ready %}disabled{% endif %}>Clear</button>
+      <button type="button" id="chat-clear" {% if not form_ready %}disabled{% endif %}>Clear</button>
     </p>
   </form>
 </div>

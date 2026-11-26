@@ -195,6 +195,11 @@ def test_search_filters_and_labels(tmp_path):
     assert "gated" in skipped["someone/Secret-Chat-7B-GGUF"]
     assert "trust_remote_code" in skipped["someone/CustomCode-1B-Instruct-GGUF"]
     assert "too large" in skipped["someone/Huge-70B-Instruct-GGUF"]
+    big = payload["too_big"]
+    assert [row["hf_id"] for row in big] == ["someone/Huge-70B-Instruct-GGUF"]
+    assert big[0]["fit"] == "won't fit"
+    assert big[0]["hosted_only"] is True
+    assert big[0]["approx_size_mb"] is None
 
 
 def test_gated_included_when_token_set(tmp_path):
@@ -225,6 +230,7 @@ def test_cache_used_when_huggingface_is_down(tmp_path):
     assert live["online"] is True
     assert live["cached"] is False
     assert cache_file.is_file()
+    assert live["too_big"][0]["hf_id"] == "someone/Huge-70B-Instruct-GGUF"
 
     def boom(url, token=None, timeout=20):
         raise DiscoveryError("Hugging Face could not be reached: timed out")
@@ -240,6 +246,7 @@ def test_cache_used_when_huggingface_is_down(tmp_path):
     assert offline["cached"] is True
     assert offline["cache_age_seconds"] is not None
     assert offline["results"][0]["hf_id"] == live["results"][0]["hf_id"]
+    assert offline["too_big"][0]["hf_id"] == live["too_big"][0]["hf_id"]
     assert "could not be reached" in offline["error"].lower()
 
     mismatched = discover.discover(

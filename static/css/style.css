@@ -229,6 +229,23 @@ ol.scores li:first-child {
   font-size: 0.8rem;
 }
 
+#hosted-option {
+  margin-top: 1.5rem;
+}
+
+#hosted-option h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.picker-item a {
+  display: inline-block;
+  margin-top: 0.9rem;
+  margin-right: 0.75rem;
+  font-weight: 650;
+  color: var(--accent);
+}
+
 #model-discover {
   margin-top: 1.5rem;
 }

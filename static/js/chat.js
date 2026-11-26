@@ -9,6 +9,8 @@
   const clearBtn = document.getElementById("chat-clear");
   const transcript = document.getElementById("transcript");
   const ready = panel.dataset.ready === "true";
+  const hosted = panel.dataset.backend === "hosted";
+  const endpoint = hosted ? "/api/chat/hosted" : "/api/chat";
   let messages = [];
   let abort = null;
 
@@ -46,11 +48,16 @@
     setBusy(true);
     abort = new AbortController();
     let reply = "";
+    const body = { messages: messages };
+    if (hosted) {
+      if (panel.dataset.model) body.model = panel.dataset.model;
+      if (panel.dataset.hfId) body.hf_id = panel.dataset.hfId;
+    }
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: messages }),
+        body: JSON.stringify(body),
         signal: abort.signal,
       });
       if (!res.ok && (res.headers.get("Content-Type") || "").indexOf("text/event-stream") === -1) {

@@ -9,8 +9,10 @@ The guiding rule: **after setup, nothing touches the network.** The
 exceptions are explicit, user-started actions: a model download
 (`POST /api/models/select` or `POST /api/models/<id>/download`), an
 explicit Hugging Face search from Discover (`GET /api/models/discover`),
-and **Download library** on `/videos`, which fetches a remote manifest and
-selected video files. Search results are cached on disk so a previous
+**Download library** on `/videos`, which fetches a remote manifest and
+selected video files, and **hosted chat** (`/chat?hosted=1`,
+`POST /api/chat/hosted`), which sends a conversation to OpenRouter when
+the owner has saved an API key. Search results are cached on disk so a previous
 search still shows offline. Map packs can still be copied in by hand or
 fetched once by `scripts/fetch_demo_map.py`. `scripts/fetch_videos.py`
 (yt-dlp) remains a fallback for the third-party Creative Commons catalog.
@@ -26,6 +28,7 @@ firstbook/videos.py         video index from videos.json + sidecars, search, top
 firstbook/remote_library.py remote manifest, Download library, sha256, resume
 firstbook/guides.py         Markdown/text guides, keyword search
 firstbook/chat.py           First Book chat prompt, history trim and status messages
+modelwidget/hosted.py       optional OpenRouter chat for models that will not fit locally
 firstbook/web.py            routes for /home, /maps, /videos, /guides, /chat and /api/status
 modelwidget/catalog.py      model catalog (category, status), filtering, install-if-missing
 modelwidget/discover.py     Hugging Face GGUF search, fit labels, user catalog, disk cache
@@ -83,6 +86,9 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /chat`, `GET /api/chat/status` | Offline GGUF chat page and readiness |
 | `POST /api/chat` | Stream a chat reply (SSE). Body: `{ "messages": [...] }` |
 | `POST /api/chat/stop` | Stop the current chat reply |
+| `GET /chat?hosted=1` | Same page, using OpenRouter. Optional `hf_id` or `model` |
+| `GET /api/chat/hosted/status` | Whether a key is set, and whether a Hugging Face repo is hosted. The key is not returned |
+| `POST /api/chat/hosted` | Stream a hosted reply (SSE). Body: `{ "messages": [...], "model": "", "hf_id": "" }` |
 | `GET /api/models`, `POST /api/models/select` | Model picker (rows carry `downloadable`, `warnings`, `download`; `planned` listed separately; user picks have `source: user`) |
 | `GET /api/models/discover?q=&task=chat` | Search Hugging Face for GGUF chat models that fit this machine; cached for offline use |
 | `POST /api/models/discover/add`, `POST /api/models/discover/remove` | Write or drop a pick in `config/models_user.json` (never the curated catalog) |
@@ -291,6 +297,15 @@ The picker is extended, not replaced:
   link to the model page, and does not crash.
 * See the README section "Downloading models" for the CLI and
   troubleshooting (MODEL_WEIGHTS, HF_HUB_OFFLINE, disk space, proxies).
+* **Hosted chat** is separate from the local GGUF path. On the Models page,
+  **Open hosted chat** (and **Try hosted** on a Discover row marked
+  "won't fit", including repos of 11B or more listed as too big to download)
+  opens `/chat?hosted=1`. The server calls OpenRouter's chat completions
+  API with a key from `OPENROUTER_API_KEY` or `config/hosted.local.json`
+  (gitignored). The default model is `openrouter/free`. A Hugging Face GGUF
+  repo is matched to a hosted id when OpenRouter publishes one; otherwise
+  the page says that repo is not hosted. No local weights are loaded for
+  that request. Free-tier limits are in the README.
 
 ## Roadmap
 
