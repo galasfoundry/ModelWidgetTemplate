@@ -6,17 +6,16 @@
 > on the machine. An optional hosted chat on the Models page can call a large
 > model over the internet when you give it an API key. Open http://127.0.0.1:5000/home after `python app.py`. For a map to
 > look at, run `python scripts/fetch_demo_map.py` once while online, then open
-> http://127.0.0.1:5000/maps . For videos, use the Download library button
-> on http://127.0.0.1:5000/videos . The default host is the live GitHub
-> Release `library-v1` (`FIRSTBOOK_LIBRARY_URL`, see
-> [docs/REMOTE_VIDEO_LIBRARY.md](docs/REMOTE_VIDEO_LIBRARY.md)).
-> `python scripts/fetch_videos.py` remains a fallback for the Creative
+> http://127.0.0.1:5000/maps . For videos, open
+> http://127.0.0.1:5000/videos . The four original explainers (head and flow,
+> watts and watt-hours, volts amps and ohms, and the fire triangle) are listed
+> there in branches. Online, they stream from the GitHub release `episodes-v1`.
+> Download an episode, or use Download library, to keep a copy on the computer.
+> That copy keeps playing with no network. The video files are not in git.
+> See [docs/REMOTE_VIDEO_LIBRARY.md](docs/REMOTE_VIDEO_LIBRARY.md).
+> `python scripts/fetch_videos.py` is still the fallback for the Creative
 > Commons YouTube videos (`pip install yt-dlp`, about 290 MB at 360p; credits in
-> [library/videos/README.md](library/videos/README.md)). The original
-> "Head and flow" and "Watts vs watt-hours" episodes are on that release.
-> Their sidecars and subtitles are already in the repo; the `.mp4` files
-> are not in git. Then open
-> http://127.0.0.1:5000/videos . Content goes
+> [library/videos/README.md](library/videos/README.md)). Content goes
 > in `library/` (maps, videos, guides); see
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layout, routes, how to
 > add map packs and videos, the roadmap and known issues (including the
@@ -365,6 +364,16 @@ One model is loaded at a time. Pick another one on the page, or change `MODEL_ID
 
 Gated repos need `HF_TOKEN` in the environment or in `config/.env`. Public repos used by the defaults do not.
 
+## Video branches
+
+The originals are grouped into lanes on the Videos page. Fundamentals is the trunk (episodes 001 to 004). Later topics hang off the episode they grow from: micro-hydro from 001, batteries and inverters from 003, fire from 004. Water treatment waits for a fundamentals episode that is not filmed yet, so that lane stays on the trunk and says so. A card shows the episode number, whether it is downloaded, and (in the browser) whether you have watched it.
+
+Each branch has a short theme, eight seconds, made from the same synthesised music bed as the episodes (a soft pad and a bell, no samples). The only changes are key, speed, and tone. Sound is off until you turn it on, and then it plays quietly when you open a lane. The settings for each theme are in `config/branch_themes.json`, which is what a future episode render should use. Regenerate the audio with:
+
+```bash
+python scripts/render_branch_stingers.py
+```
+
 ## Tests
 
 ```bash
@@ -392,9 +401,12 @@ weights/                    local snapshots, not committed
 firstbook/                  The First Book: library paths, maps, videos, remote library, guides, routes
 config/maps_catalog.json    known UK map packs, sources and licences
 config/videos_catalog.json  Creative Commons videos with credits (yt-dlp fallback)
+config/branches.json        branch lanes and which episode each one grows from
+config/branch_themes.json   per-branch music-bed settings for future episodes
+config/library_manifest.json  shipped copy of the episodes-v1 manifest
 modelwidget/gguf.py         llama.cpp backend for GGUF models (optional)
 modelwidget/hosted.py       optional OpenRouter chat for models that will not fit
-scripts/                    download_models.py, fetch_demo_map.py, fetch_videos.py, build_video_manifest.py (--remote)
+scripts/                    download_models.py, fetch_demo_map.py, fetch_videos.py, build_video_manifest.py (--remote), render_branch_stingers.py
 library/                    offline content: maps/, videos/, guides/
 docs/ARCHITECTURE.md        The First Book structure and roadmap
 ```

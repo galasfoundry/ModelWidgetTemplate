@@ -2,13 +2,24 @@
 {% block title %}{{ video.title }} · The First Book{% endblock %}
 {% block content %}
 <h1>{{ video.title }}</h1>
-<video controls preload="metadata" width="100%">
-  <source src="{{ url_for('firstbook.video_file', rel=video.id) }}" type="{{ video.mimetype }}">
+{% if video.playback_url %}
+<video controls preload="metadata" width="100%" data-watch-id="{{ video.watch_id or '' }}">
+  <source src="{{ video.playback_url }}" type="{{ video.mimetype }}">
   {% if video.subtitles_url %}
   <track kind="subtitles" src="{{ video.subtitles_url }}" srclang="en" label="English" default>
   {% endif %}
 </video>
-<p class="meta">{{ video.topic }}{% if video.tags %} · {{ video.tags|join(", ") }}{% endif %}</p>
+{% endif %}
+{% if video.downloaded %}
+<p class="meta">Saved on this computer. It keeps playing with no network.</p>
+{% elif video.playback_url %}
+<p class="meta">Streaming from the library. It needs a network until you download it.</p>
+{% if video.manifest_id %}
+<button type="button" id="watch-download" class="ep-download" data-manifest-id="{{ video.manifest_id }}">Download for offline</button>
+<p class="meta" id="watch-download-status" hidden></p>
+{% endif %}
+{% endif %}
+<p class="meta">{% if video.episode %}Episode {{ video.episode }}{% if video.branch %} · {{ video.branch }}{% endif %} · {% endif %}{{ video.topic }}{% if video.tags %} · {{ video.tags|join(", ") }}{% endif %}</p>
 {% if video.description %}<p>{{ video.description }}</p>{% endif %}
 {% if video.attribution %}
 <p class="attribution">Credit:
@@ -20,4 +31,7 @@
 </p>
 {% elif video.source or video.license %}<p class="meta">{{ video.source }} {{ video.license }}</p>{% endif %}
 {% if video.fact_check %}<p class="meta">{{ video.fact_check }}</p>{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/videos.js') }}"></script>
 {% endblock %}

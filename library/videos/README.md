@@ -20,7 +20,7 @@ licence.
 
 The usual way to fill this folder is the **Download library** button on
 `/videos`. It fetches a versioned manifest from `FIRSTBOOK_LIBRARY_URL`
-(default: the live GitHub Release `library-v1` on
+(default: the live GitHub Release `episodes-v1` on
 galasfoundry/ModelWidgetTemplate), shows what is new or updated, and
 downloads the files with resume and sha256 checks. Already-present videos
 keep playing offline. See [docs/REMOTE_VIDEO_LIBRARY.md](../../docs/REMOTE_VIDEO_LIBRARY.md)
@@ -76,16 +76,17 @@ own work, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
 credited to The First Book / galasfoundry, and fact-checked by Murder before
 they go into the library.
 
-The sidecars and subtitles are in git. The video files are not
-(episode 001 is about 6.7 MB at 720p; episode 002 is about 6.4 MB). Copy
-them into place:
+The sidecars and subtitles are in git. The video files are not.
+Episodes 001 to 004 are about 6.7 MB, 6.5 MB, 5.4 MB and 4.8 MB at 720p.
+Download library fetches them from the `episodes-v1` release. To place a
+file by hand:
 
 ```bash
 mkdir -p library/videos/originals
 cp /path/to/001-head-and-flow.mp4 library/videos/originals/
-cp /path/to/002-watts-vs-watt-hours.mp4 library/videos/originals/
 ```
 
-Each then appears on `/videos` under Power, with the credit line and
+Each then appears on `/videos` in its branch lane, with the credit line and
 subtitles. Episodes use the same layout: `originals/<id>-<slug>.mp4`
-plus a `<file>.json` sidecar and an optional `.srt`.
+plus a `<file>.json` sidecar and an optional `.srt`. The sidecar records
+`branch` and `parent` (the episode it builds on).

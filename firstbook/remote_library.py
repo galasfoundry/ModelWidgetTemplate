@@ -7,9 +7,11 @@ fetch a versioned manifest and then selected files, each streamed to a
 
 The library base URL is ``FIRSTBOOK_LIBRARY_URL`` (and the same key in
 ``config/.env``). The default is the published GitHub Release
-``library-v1`` under galasfoundry. ``FIRSTBOOK_LIBRARY_MANIFEST`` overrides
-that with a local file or a direct manifest URL, which is how tests and
-a USB-key copy work. Publishing a new episode is: build the manifest,
+``episodes-v1`` under galasfoundry (the four First Book originals, with
+branch and parent fields). ``library-v1`` was the earlier release of
+episodes 001 and 002. ``FIRSTBOOK_LIBRARY_MANIFEST`` overrides the URL
+with a local file or a direct manifest URL, which is how tests and a
+USB-key copy work. Publishing a new episode is: build the manifest,
 upload the files, no code change. ``scripts/fetch_videos.py`` (yt-dlp)
 stays as a fallback for the third-party Creative Commons catalog.
 """
@@ -35,7 +37,7 @@ from firstbook.library import VIDEOS_CATALOG_PATH
 
 SCHEMA = "firstbook.library.v1"
 DEFAULT_LIBRARY_URL = (
-    "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/"
+    "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/episodes-v1/"
 )
 # An old or mistaken setting may still point here. It is not a live host.
 PLACEHOLDER_LIBRARY_URL = (
@@ -68,6 +70,8 @@ METADATA_FIELDS = (
     "fact_check",
     "subtitles",
     "episode",
+    "branch",
+    "parent",
     "narration_voice",
 )
 
@@ -288,6 +292,21 @@ def _entry_from_raw(raw: dict, base: str) -> dict:
         "description": str(raw.get("description") or meta.get("description") or ""),
         "subtitles": subtitles_rel,
     })
+    if "branch" in raw:
+        branch = videos.branch_id(raw.get("branch"))
+    else:
+        branch = videos.branch_id(meta.get("branch"))
+    if "parent" in raw:
+        parent = videos.parent_episode(raw.get("parent"))
+    elif "parent_episode" in raw:
+        parent = videos.parent_episode(raw.get("parent_episode"))
+    else:
+        parent = videos.parent_episode(meta.get("parent", meta.get("parent_episode")))
+    episode = raw.get("episode") if raw.get("episode") not in (None, "") else meta.get("episode")
+    episode = str(episode or "").strip()
+    meta["branch"] = branch
+    meta["parent"] = parent
+    meta["episode"] = episode
     return {
         "id": ident,
         "file": rel,
@@ -310,6 +329,9 @@ def _entry_from_raw(raw: dict, base: str) -> dict:
         "description": meta["description"],
         "creator": meta["creator"],
         "creator_url": meta["creator_url"],
+        "branch": branch,
+        "parent": parent,
+        "episode": episode,
         "sidecar": meta,
     }
 
@@ -355,6 +377,46 @@ def load_manifest_file(path: Path, *, base_url: str = "") -> dict:
     return parse_manifest(data, base_url=base_url)
 
 
+def open_remote(url: str, *, range_header: str | None = None, timeout: float = 30.0):
+    """GET a library file, following one redirect and keeping a Range header.
+
+    GitHub release URLs answer 302 to a short-lived file host. The player
+    needs that host to honour Range, because the episode mp4 stores its
+    index at the end of the file.
+    """
+
+    class _StopRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: A003
+            return None
+
+    opener = urllib.request.build_opener(_StopRedirect)
+
+    def once(target: str):
+        headers = {"User-Agent": USER_AGENT}
+        if range_header:
+            headers["Range"] = range_header
+        request = urllib.request.Request(target, headers=headers)
+        return opener.open(request, timeout=timeout)
+
+    try:
+        return once(url)
+    except urllib.error.HTTPError as exc:
+        if exc.code in {301, 302, 303, 307, 308}:
+            location = exc.headers.get("Location")
+            exc.close()
+            if not location:
+                raise DownloadError(f"Redirect from the library file had no Location.")
+            try:
+                return once(urljoin(url, location))
+            except urllib.error.HTTPError as exc2:
+                raise DownloadError(f"Could not open the library file ({exc2.code}).") from exc2
+            except urllib.error.URLError as exc2:
+                raise DownloadError("Could not open the library file: offline or blocked.") from exc2
+        raise DownloadError(f"Could not open the library file ({exc.code}).") from exc
+    except urllib.error.URLError as exc:
+        raise DownloadError("Could not open the library file: offline or blocked.") from exc
+
+
 def _open(url: str, headers: dict | None = None, timeout: float = 30.0):
     req_headers = {"User-Agent": USER_AGENT}
     if headers:
@@ -395,8 +457,7 @@ def fetch_manifest(spec: str | None = None, *, settings: LibrarySettings | None 
         if settings.is_placeholder or is_placeholder_url(spec):
             hint = (
                 " This FIRSTBOOK_LIBRARY_URL is a placeholder, not a live host. "
-                "Use the published library at "
-                "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/ "
+                f"Use the published library at {DEFAULT_LIBRARY_URL} "
                 "or set FIRSTBOOK_LIBRARY_MANIFEST to a local manifest file."
             )
         raise ManifestError(f"Could not fetch the library manifest ({exc.code}).{hint}") from exc
@@ -405,8 +466,7 @@ def fetch_manifest(spec: str | None = None, *, settings: LibrarySettings | None 
         if settings.is_placeholder or is_placeholder_url(spec):
             hint = (
                 " This FIRSTBOOK_LIBRARY_URL is a placeholder, not a live host. "
-                "The published library is "
-                "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/ ."
+                f"The published library is {DEFAULT_LIBRARY_URL}."
             )
         raise ManifestError(f"Could not reach the library manifest (offline or blocked).{hint}") from exc
     if len(raw) > MANIFEST_MAX_BYTES:
@@ -528,6 +588,12 @@ def _merge_local_manifest(videos_dir: Path, entry: dict) -> None:
     }
     if entry.get("subtitles"):
         local["subtitles"] = entry["subtitles"]
+    if "branch" in entry:
+        local["branch"] = entry.get("branch") or ""
+    if "episode" in entry:
+        local["episode"] = entry.get("episode") or ""
+    if "parent" in entry:
+        local["parent"] = entry.get("parent")
     records.append(local)
     path.write_text(json.dumps({"version": 1, "videos": records}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -756,6 +822,44 @@ def check_library(videos_dir: Path, *, settings: LibrarySettings | None = None, 
     }
 
 
+SHIPPED_MANIFEST_PATH = VIDEOS_CATALOG_PATH.parent / "library_manifest.json"
+
+
+def _norm_base(url: str) -> str:
+    return (url or "").strip().rstrip("/")
+
+
+def load_shipped_manifest() -> dict | None:
+    """The manifest committed in the repo, if it parses."""
+    path = SHIPPED_MANIFEST_PATH
+    if not path.is_file():
+        return None
+    try:
+        return load_manifest_file(path)
+    except ManifestError:
+        return None
+
+
+def active_manifest(videos_dir: Path, settings: LibrarySettings | None = None) -> dict | None:
+    """Manifest for the video page. Does not use the network.
+
+    A cache from the last successful check wins when it belongs to the
+    configured host. Otherwise the shipped manifest is used when its base
+    URL is that host, so a fresh install can list the episodes before the
+    first check. A different ``FIRSTBOOK_LIBRARY_URL`` does not pick up
+    the shipped catalog.
+    """
+    settings = settings or library_settings()
+    cached = load_cached_manifest(videos_dir)
+    shipped = load_shipped_manifest()
+    configured = _norm_base(settings.base_url)
+    if cached is not None and _norm_base(str(cached.get("base_url") or "")) == configured:
+        return cached
+    if shipped is not None and _norm_base(str(shipped.get("base_url") or "")) == configured:
+        return shipped
+    return cached
+
+
 def load_cached_manifest(videos_dir: Path) -> dict | None:
     data = _read_json(cached_manifest_path(videos_dir))
     if not data:
@@ -817,6 +921,9 @@ def build_remote_manifest(
             sub_url = urljoin(base_url, sub_name)
         credit = str(meta.get("credit") or meta.get("attribution") or "")
         source = str(meta.get("source_url") or meta.get("source") or "")
+        branch = videos.branch_id(meta.get("branch"))
+        parent = videos.parent_episode(meta.get("parent", meta.get("parent_episode")))
+        episode = str(meta.get("episode") or "").strip()
         duration = meta.get("duration_s")
         if not isinstance(duration, (int, float)) or isinstance(duration, bool):
             duration = None
@@ -840,6 +947,9 @@ def build_remote_manifest(
             "duration_s": duration,
             "subtitles_url": sub_url,
             "subtitles": sub_rel,
+            "branch": branch,
+            "parent": parent,
+            "episode": episode,
             "sidecar": sidecar,
         }
         entries.append(entry)

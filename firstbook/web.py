@@ -12,11 +12,12 @@ from __future__ import annotations
 
 import json
 import threading
+from pathlib import Path
 from typing import Callable
 
 from flask import Blueprint, Response, abort, current_app, jsonify, render_template, request, send_file, stream_with_context
 
-from firstbook import chat as chatlib, guides, maps, remote_library, videos
+from firstbook import branches, chat as chatlib, guides, maps, remote_library, videos
 from firstbook.library import Library, safe_child
 from modelwidget import catalog, hosted
 from modelwidget.capabilities import detect_capabilities
@@ -43,9 +44,13 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
             videos.search(items, q, topic),
             key=lambda v: (v["topic"], v["title"].lower(), v["file"]),
         )
+        tree = branches.for_page(library.videos_dir, q=q, topic=topic)
+        shown = branches.files_in_tree(tree)
+        others = [v for v in results if v["file"] not in shown]
         return render_template(
             "videos.html",
-            videos=results,
+            videos=others,
+            branches=tree,
             topics=videos.topics_present(items),
             topic_names=videos.TOPIC_NAMES,
             q=q,
@@ -55,7 +60,7 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
 
     @bp.get("/videos/watch/<path:rel>")
     def video_watch(rel: str):
-        item = next((v for v in videos.index(library.videos_dir) if v["id"] == rel), None)
+        item = branches.playable(library.videos_dir, rel)
         if item is None:
             abort(404)
         return render_template("video_watch.html", video=item)
@@ -132,6 +137,41 @@ def create_blueprint(library: Library, model_status: Callable[[dict], dict]) -> 
                 "suggested_topics": list(videos.TOPICS),
             }
         )
+
+    @bp.get("/videos/stream/<path:rel>")
+    def video_stream(rel: str):
+        """Stream a remote episode through this app so the player can seek.
+
+        Used only when the file is not on disk yet. A downloaded copy is
+        served by /videos/file and does not come here.
+        """
+        url = branches.remote_media_url(library.videos_dir, rel)
+        if not url:
+            abort(404)
+        try:
+            upstream = remote_library.open_remote(url, range_header=request.headers.get("Range"))
+        except remote_library.DownloadError:
+            abort(502)
+        status = getattr(upstream, "status", None) or upstream.getcode() or 200
+        headers = {}
+        for key in ("Content-Length", "Content-Range", "Accept-Ranges"):
+            value = upstream.headers.get(key)
+            if value:
+                headers[key] = value
+        headers["Content-Type"] = videos.MIMETYPES.get(Path(rel).suffix.lower(), "application/octet-stream")
+        headers.setdefault("Accept-Ranges", "bytes")
+
+        def generate():
+            try:
+                while True:
+                    chunk = upstream.read(remote_library.CHUNK)
+                    if not chunk:
+                        break
+                    yield chunk
+            finally:
+                upstream.close()
+
+        return Response(stream_with_context(generate()), status=status, headers=headers)
 
     @bp.get("/videos/file/<path:rel>")
     def video_file(rel: str):

@@ -23,7 +23,10 @@
   "creator_url": "https://github.com/galasfoundry/ModelWidgetTemplate",
   "attribution": "“Watts vs watt-hours: power, energy and your daily budget” by The First Book / galasfoundry, licensed CC BY 4.0",
   "subtitles": "002-watts-vs-watt-hours.srt",
+  "id": "002-watts-vs-watt-hours",
   "episode": "002",
+  "branch": "fundamentals",
+  "parent": "001",
   "narration_voice": "Piper TTS, en_GB 'cori' (high); dataset public domain (LibriVox)",
   "fact_check": "Fact-checked by Murder, 20 Nov 2026. PASS WITH FIXES applied."
 }

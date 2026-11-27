@@ -1,5 +1,6 @@
 {% extends "fb_base.html" %}
 {% block title %}Videos · The First Book{% endblock %}
+{% block body_class %}page-videos{% endblock %}
 {% block content %}
 <h1>Videos</h1>
 <section id="remote-library" class="remote-library" data-placeholder="{{ '1' if library.placeholder else '0' }}">
@@ -31,6 +32,58 @@
     <div id="library-bar" class="bar" hidden><span style="width: 0%"></span></div>
   </div>
 </section>
+{% macro render_lane(lane) %}
+<li class="branch-lane" data-branch="{{ lane.id }}" data-title="{{ lane.title }}" data-theme-ogg="{{ url_for('static', filename=lane.theme_file) }}" data-theme-mp3="{{ url_for('static', filename=lane.theme_mp3) }}">
+  <details {% if lane.open %}open{% endif %}>
+    <summary>
+      <span class="branch-name">{{ lane.title }}</span>
+      <span class="branch-from">{{ lane.parent_label }}{% if lane.parent_title %} · {{ lane.parent_title }}{% endif %}</span>
+    </summary>
+    {% if lane.summary %}<p class="branch-summary">{{ lane.summary }}</p>{% endif %}
+    {% if lane.episodes %}
+    <ol class="episode-list">
+      {% for ep in lane.episodes %}
+      <li class="episode-card" data-watch-id="{{ ep.watch_id }}" data-downloaded="{{ '1' if ep.downloaded else '0' }}">
+        <a class="episode-link" href="{{ url_for('firstbook.video_watch', rel=ep.id) }}">
+          <span class="ep-num">{{ ep.episode or "•" }}</span>
+          <span class="ep-title">{{ ep.title }}</span>
+        </a>
+        <p class="ep-meta">{{ ep.topic_name }}{% if ep.creator %} · by {{ ep.creator }}{% endif %}{% if ep.license %} · {{ ep.license }}{% endif %}{% if ep.duration_label %} · {{ ep.duration_label }}{% endif %}{% if ep.size_label %} · {{ ep.size_label }}{% endif %}{% if ep.parent %} · builds on {{ ep.parent }}{% endif %}</p>
+        <p class="ep-state">
+          {% if ep.downloaded %}<span class="ep-badge on">Downloaded</span>{% else %}<span class="ep-badge off">Not downloaded</span>{% endif %}
+          <span class="ep-badge watched" hidden>Watched</span>
+          {% if not ep.downloaded and ep.manifest_id %}
+          <button type="button" class="ep-download" data-manifest-id="{{ ep.manifest_id }}">Download</button>
+          {% endif %}
+        </p>
+        {% if ep.forks %}
+        <ol class="branch-forks">
+          {% for fork in ep.forks %}{{ render_lane(fork) }}{% endfor %}
+        </ol>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="empty">No episodes yet.</p>
+    {% endif %}
+  </details>
+</li>
+{% endmacro %}
+{% if branches %}
+<section id="branch-tree" class="branch-tree">
+  <div class="branch-toolbar">
+    <h2>Branches</h2>
+    <button type="button" id="branch-sound" aria-pressed="true">Sound off</button>
+  </div>
+  <p class="meta" id="branch-note">Each branch is a lane. It shows the episode it grows from. Open a lane to hear its short theme. Sound stays off until you turn it on, and then it plays quietly.</p>
+  <p class="meta" id="branch-playing" hidden></p>
+  <audio id="branch-player" preload="none"></audio>
+  <ol class="branch-lanes">
+    {% for lane in branches %}{{ render_lane(lane) }}{% endfor %}
+  </ol>
+</section>
+{% endif %}
 <form method="get">
   <input name="q" value="{{ q }}" placeholder="Search videos">
   <select name="topic">
@@ -50,7 +103,7 @@
   </ul>
   {% endfor %}
 </div>
-{% else %}
+{% elif not branches %}
 <p>No videos found. See <code>library/videos/README.md</code>, or use Download library above.</p>
 {% endif %}
 {% endblock %}
