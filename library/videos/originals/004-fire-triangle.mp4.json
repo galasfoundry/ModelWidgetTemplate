@@ -1,0 +1,33 @@
+{
+  "file": "originals/004-fire-triangle.mp4",
+  "id": "004-fire-triangle",
+  "title": "The fire triangle",
+  "topic": "fire",
+  "tags": [
+    "fire",
+    "firelighting",
+    "firewood",
+    "ferro-rod",
+    "tinder",
+    "kindling",
+    "energy",
+    "carbon-monoxide",
+    "safety",
+    "fundamentals",
+    "first-book-originals"
+  ],
+  "duration_s": 114.4,
+  "description": "An original animated explainer. Dry firewood holds about 4 kWh of heat per kilogram, and fire is how we let it out. A fire needs heat, fuel and oxygen: take away any one and it goes out. Building a fire from tinder up through spaghetti-thin, finger-thick and wrist-thick sticks, why dry wood matters (Ready to Burn: 20% moisture or less), how a fire steel makes sparks, and the safety rules: never a fire or barbecue in a tent, the Countryside Code, and drown, stir, drown again, check it's cold.",
+  "source": "The First Book / galasfoundry (First Book Originals #004, original animation)",
+  "license": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "creator": "The First Book / galasfoundry",
+  "creator_url": "https://github.com/galasfoundry/ModelWidgetTemplate",
+  "attribution": "“The fire triangle” by The First Book / galasfoundry, licensed CC BY 4.0",
+  "subtitles": "004-fire-triangle.srt",
+  "episode": "004",
+  "branch": "fundamentals",
+  "parent": "002",
+  "narration_voice": "Piper TTS, en_GB 'cori' (high); dataset public domain (LibriVox)",
+  "fact_check": "Fact-checked by Blackbird, 27 Nov 2026. PASS WITH FIXES applied."
+}

@@ -186,7 +186,7 @@ def test_default_library_url_is_the_live_release(monkeypatch):
     assert settings.is_placeholder is False
     assert settings.base_url == remote_library.DEFAULT_LIBRARY_URL
     assert settings.base_url == (
-        "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/"
+        "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/episodes-v1/"
     )
     assert settings.manifest_url == settings.base_url + "manifest.json"
     # A leftover placeholder URL is still flagged, and is not the default.

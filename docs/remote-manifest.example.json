@@ -2,7 +2,7 @@
   "schema": "firstbook.library.v1",
   "version": 1,
   "generated_at": "2026-11-20T12:00:00Z",
-  "base_url": "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/",
+  "base_url": "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/episodes-v1/",
   "videos": [
     {
       "id": "001-head-and-flow",
@@ -13,11 +13,14 @@
       "license_url": "https://creativecommons.org/licenses/by/4.0/",
       "credit": "“Head and flow: how much power is in your stream?” by The First Book / galasfoundry, licensed CC BY 4.0",
       "source_url": "The First Book / galasfoundry (First Book Originals #001, original animation)",
-      "url": "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/001-head-and-flow.mp4",
+      "url": "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/episodes-v1/001-head-and-flow.mp4",
       "size": 6999999,
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "duration_s": 119.1,
-      "subtitles_url": "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/001-head-and-flow.srt",
+      "subtitles_url": "https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/episodes-v1/001-head-and-flow.srt",
+      "branch": "fundamentals",
+      "parent": null,
+      "episode": "001",
       "subtitles": "originals/001-head-and-flow.srt",
       "sidecar": {
         "description": "An original animated explainer. Hydro power comes from two numbers, head and flow.",

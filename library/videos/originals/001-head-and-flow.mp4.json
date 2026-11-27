@@ -20,7 +20,10 @@
   "creator_url": "https://github.com/galasfoundry/ModelWidgetTemplate",
   "attribution": "“Head and flow: how much power is in your stream?” by The First Book / galasfoundry, licensed CC BY 4.0",
   "subtitles": "001-head-and-flow.srt",
+  "id": "001-head-and-flow",
   "episode": "001",
+  "branch": "fundamentals",
+  "parent": null,
   "narration_voice": "Piper TTS, en_GB 'cori' (high); dataset public domain (LibriVox)",
   "fact_check": "Fact-checked by Murder, 19 Nov 2026. PASS WITH FIXES applied."
 }

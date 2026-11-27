@@ -79,7 +79,8 @@ from the project root; set them in `config/.env` or the shell.
 | `GET /maps/files/<pack>.pmtiles` | Whole PMTiles file with HTTP Range |
 | `GET /videos`, `GET /api/videos?q=&topic=&tag=` | List and search videos; Download library button |
 | `GET /videos/watch/<path>` | Bare player page |
-| `GET /videos/file/<path>` | Stream a video with HTTP Range (206) |
+| `GET /videos/file/<path>` | Stream a video already on disk, with HTTP Range (206) |
+| `GET /videos/stream/<path>` | Stream a remote episode while online (Range is passed through). Not used once the file is downloaded |
 | `GET /api/videos/library`, `POST …/check`, `POST …/download`, `GET …/status` | Remote library manifest, compare, download with progress |
 | `GET /guides`, `GET /api/guides?q=` | List and search guides |
 | `GET /guides/<slug>`, `GET /api/guides/<slug>` | One guide |
@@ -218,14 +219,22 @@ committed. The seven take about 290 MB at 360p (about 500 MB at
 ### First Book originals
 
 Animated explainers made for The First Book go in `library/videos/originals/`.
-They are CC BY 4.0, credited to The First Book / galasfoundry, and fact-checked
-by Murder. The `<video>.json` sidecar and `.srt` subtitles are committed; the
-`.mp4` is not. Copy `001-head-and-flow.mp4` (about 6.7 MB, 720p) and
-`002-watts-vs-watt-hours.mp4` (about 6.4 MB, 720p) next to the shipped
-sidecars and subtitles and they appear on `/videos` under Power. The
-watch page shows the credit line (without the "reduced resolution" note used
-for the YouTube copies) and serves the `.srt` as WebVTT on
-`/videos/subtitles/...` for a `<track>` element.
+They are CC BY 4.0, credited to The First Book / galasfoundry. Episodes 001
+to 003 were fact-checked by Murder; episode 004 by Blackbird. The
+`<video>.json` sidecar and `.srt` subtitles are committed; the `.mp4` is not.
+The four episodes (about 6.7 MB, 6.5 MB, 5.4 MB and 4.8 MB at 720p) are on
+the `episodes-v1` release. `/videos` lists them in branch lanes. If the file is not on disk and the machine is online, the watch page plays it
+through `/videos/stream/...`, which reads the release (including Range
+requests) and sends the bytes to the player. Download library, or the button
+on the card, saves a copy, and that copy is what plays with no network. The watch page shows the credit line (without
+the "reduced resolution" note used for the YouTube copies) and serves the
+`.srt` as WebVTT on `/videos/subtitles/...` for a `<track>` element.
+
+`config/branches.json` is the lane map. `config/branch_themes.json` is the
+per-branch variation of the synthesised music bed. Short ogg and mp3 stingers
+live in `static/audio/branches/` and play quietly when a lane is opened, after
+the sound control is turned on. `scripts/render_branch_stingers.py` regenerates
+them.
 
 ### Remote video library
 
@@ -239,8 +248,8 @@ resume. Already-present files keep playing with no network. If the
 manifest cannot be reached, the page keeps working from disk and shows
 when the manifest was last checked.
 
-The default URL is the live GitHub Release `library-v1`
-(`https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/library-v1/`).
+The default URL is the live GitHub Release `episodes-v1`
+(`https://github.com/galasfoundry/ModelWidgetTemplate/releases/download/episodes-v1/`).
 Publishing a new episode is: render the files, run
 `python scripts/build_video_manifest.py --remote --base-url URL -o manifest.json`,
 upload the files and the manifest. No app code change, and no videos in

@@ -68,7 +68,23 @@ TOPIC_NAMES = {
     "batteries": "Battery storage",
     "starlink-off-grid": "Starlink off-grid",
     "power": "Power",
+    "fire": "Fire",
 }
+
+
+def branch_id(value: object) -> str:
+    """Slug for a branch lane. Blank stays blank."""
+    return str(value or "").strip().lower()
+
+
+def parent_episode(value: object) -> str | None:
+    """Episode number this item builds on, or None when it has no parent."""
+    if value is None or isinstance(value, bool):
+        return None
+    text = str(value).strip()
+    if not text or text.lower() in {"none", "null"}:
+        return None
+    return text
 
 MIMETYPES = {
     ".mp4": "video/mp4",
@@ -126,6 +142,9 @@ def _normalise(rel: str, file: Path, meta: dict) -> dict:
         "has_metadata": bool(meta),
         "subtitles": "",
         "subtitles_url": "",
+        "episode": str(meta.get("episode") or "").strip(),
+        "branch": branch_id(meta.get("branch")),
+        "parent": parent_episode(meta.get("parent", meta.get("parent_episode"))),
     }
 
 

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "description": "Where First Book original episodes sit. A branch with parent_episode is drawn under that episode. parent_episode null means the lane stays on the trunk (the start, or a parent that is not filmed yet).",
+  "branches": [
+    {
+      "id": "fundamentals",
+      "title": "Fundamentals",
+      "summary": "Energy, power, electricity and fire. Later branches grow off these episodes.",
+      "parent_episode": null,
+      "parent_label": "Starts the trunk",
+      "order": 0,
+      "open": true
+    },
+    {
+      "id": "micro-hydro",
+      "title": "Micro-hydro",
+      "summary": "Pipe friction, the intake, turbines and dump loads.",
+      "parent_episode": "001",
+      "parent_label": "Branches from 001",
+      "order": 1
+    },
+    {
+      "id": "batteries-inverters",
+      "title": "Batteries and inverters",
+      "summary": "How a battery stores the watts, fuses and cables, and when to stay on DC. It also uses the energy budget from 002.",
+      "parent_episode": "003",
+      "parent_label": "Branches from 003 (and 002)",
+      "order": 2
+    },
+    {
+      "id": "fire",
+      "title": "Fire",
+      "summary": "Fire steel, finding dry tinder, stoves and safe indoor heat.",
+      "parent_episode": "004",
+      "parent_label": "Branches from 004",
+      "order": 3
+    },
+    {
+      "id": "water-treatment",
+      "title": "Water treatment",
+      "summary": "Settling, filtration, and making water safe to drink.",
+      "parent_episode": null,
+      "parent_label": "Branches from F6 (how much water you need), which is not filmed yet",
+      "order": 4
+    }
+  ]
+}

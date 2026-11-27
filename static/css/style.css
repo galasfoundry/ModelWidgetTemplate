@@ -325,6 +325,125 @@ ol.scores li:first-child {
   min-width: 0;
 }
 
+/* Branch lanes on /videos. A narrow column, so lanes stack instead of sitting side by side. */
+.page-videos main {
+  max-width: 44rem;
+}
+.branch-tree {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem 1rem 1.1rem;
+  margin: 0 0 1.25rem;
+}
+.branch-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.branch-toolbar h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.branch-toolbar button,
+.episode-card button,
+#watch-download {
+  margin-top: 0;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.9rem;
+}
+.branch-summary {
+  margin: 0.35rem 0 0.2rem;
+  color: var(--muted);
+}
+.branch-lanes,
+.branch-forks {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0 0 0 0.85rem;
+  border-left: 2px solid var(--line);
+}
+.branch-forks {
+  margin-left: 0.2rem;
+}
+.branch-lane {
+  margin: 0 0 0.65rem;
+  min-width: 0;
+}
+.branch-lane summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem 1rem;
+  flex-wrap: wrap;
+  cursor: pointer;
+  font-weight: 650;
+}
+.branch-from {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+.episode-list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+.episode-card {
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.episode-card:first-child {
+  border-top: 0;
+}
+.episode-link {
+  color: var(--ink);
+  font-weight: 650;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.episode-link:hover {
+  color: var(--accent);
+}
+.ep-num {
+  display: inline-block;
+  min-width: 2.1rem;
+  margin-right: 0.35rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.ep-meta,
+.ep-state {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.ep-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+.ep-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ep-badge.off {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.ep-badge.watched[hidden] {
+  display: none;
+}
+
 /* Chat page: bare layout, UI pass still to come. */
 #transcript { list-style: none; padding: 0; margin: 1rem 0; }
 .chat-msg { margin: 0.75rem 0; }

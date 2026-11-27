@@ -207,3 +207,200 @@
     })
     .catch(function () { /* stay offline-quiet */ });
 })();
+
+/* Branch lanes: watched badges, a quiet theme when a lane is opened, per-episode download. */
+(function () {
+  const tree = document.getElementById("branch-tree");
+  const WATCHED_KEY = "firstbook.watched";
+  const SOUND_KEY = "firstbook.branchSound";
+
+  function readWatched() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(WATCHED_KEY) || "[]");
+      return new Set(Array.isArray(raw) ? raw : []);
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  function writeWatched(set) {
+    localStorage.setItem(WATCHED_KEY, JSON.stringify(Array.from(set)));
+  }
+
+  function markWatched(id) {
+    if (!id) return;
+    const set = readWatched();
+    set.add(id);
+    writeWatched(set);
+    paintWatched();
+  }
+
+  function paintWatched() {
+    const set = readWatched();
+    document.querySelectorAll(".episode-card[data-watch-id]").forEach(function (card) {
+      const badge = card.querySelector(".ep-badge.watched");
+      if (!badge) return;
+      const on = set.has(card.getAttribute("data-watch-id"));
+      badge.hidden = !on;
+    });
+  }
+
+  function soundOn() {
+    return localStorage.getItem(SOUND_KEY) === "on";
+  }
+
+  function paintSound() {
+    const button = document.getElementById("branch-sound");
+    if (!button) return;
+    const on = soundOn();
+    button.textContent = on ? "Sound on" : "Sound off";
+    button.setAttribute("aria-pressed", on ? "false" : "true");
+  }
+
+  function themeUrl(lane) {
+    const audio = document.createElement("audio");
+    const ogg = lane.getAttribute("data-theme-ogg");
+    const mp3 = lane.getAttribute("data-theme-mp3");
+    if (ogg && audio.canPlayType('audio/ogg; codecs="vorbis"')) return ogg;
+    return mp3 || ogg;
+  }
+
+  function playLane(lane) {
+    const note = document.getElementById("branch-playing");
+    const player = document.getElementById("branch-player");
+    if (!player || !lane) return;
+    if (!soundOn()) {
+      if (note) note.hidden = true;
+      return;
+    }
+    const url = themeUrl(lane);
+    if (!url) return;
+    player.volume = 0.22;
+    player.src = url;
+    const title = lane.getAttribute("data-title") || "branch";
+    if (note) {
+      note.hidden = false;
+      note.textContent = "Playing the " + title + " theme.";
+    }
+    player.play().catch(function () {
+      if (note) note.hidden = true;
+    });
+  }
+
+  paintWatched();
+
+  const player = document.getElementById("branch-player");
+  if (player) {
+    player.addEventListener("ended", function () {
+      const note = document.getElementById("branch-playing");
+      if (note) note.hidden = true;
+    });
+  }
+
+  document.querySelectorAll("video[data-watch-id]").forEach(function (video) {
+    const id = video.getAttribute("data-watch-id");
+    function maybe() {
+      if (video.duration && video.currentTime / video.duration >= 0.9) markWatched(id);
+    }
+    video.addEventListener("ended", function () { markWatched(id); });
+    video.addEventListener("timeupdate", maybe);
+  });
+
+  if (!tree) {
+    const watchButton = document.getElementById("watch-download");
+    if (watchButton) watchButton.addEventListener("click", function () { downloadOne(watchButton); });
+    return;
+  }
+
+  paintSound();
+  const born = performance.now();
+
+  document.getElementById("branch-sound").addEventListener("click", function () {
+    localStorage.setItem(SOUND_KEY, soundOn() ? "off" : "on");
+    paintSound();
+    if (soundOn()) {
+      const open = tree.querySelector("details[open]");
+      if (open) playLane(open.closest(".branch-lane"));
+    } else {
+      const playing = document.getElementById("branch-player");
+      if (playing) playing.pause();
+      const note = document.getElementById("branch-playing");
+      if (note) note.hidden = true;
+    }
+  });
+
+  tree.querySelectorAll(".branch-lane details").forEach(function (details) {
+    details.addEventListener("toggle", function (ev) {
+      if (!ev.isTrusted || performance.now() - born < 400) return;
+      if (details.open) playLane(details.closest(".branch-lane"));
+    });
+  });
+
+  tree.querySelectorAll(".ep-download").forEach(function (button) {
+    button.addEventListener("click", function () { downloadOne(button); });
+  });
+
+  function showBranchError(message) {
+    const errorEl = document.getElementById("library-error") || document.getElementById("watch-download-status");
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.hidden = !message;
+      return;
+    }
+    const note = document.getElementById("branch-playing");
+    if (note) {
+      note.hidden = !message;
+      note.textContent = message;
+    }
+  }
+
+  function downloadOne(button) {
+    const id = button.getAttribute("data-manifest-id");
+    if (!id) return;
+    button.disabled = true;
+    button.textContent = "Downloading…";
+    showBranchError("");
+    fetch("/api/videos/library/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    })
+      .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+      .then(function (res) {
+        if (!res.body.ok) {
+          showBranchError(res.body.error || "Could not start the download.");
+          button.disabled = false;
+          button.textContent = "Download";
+          return;
+        }
+        pollDownload(button);
+      })
+      .catch(function (err) {
+        showBranchError((err && err.message) || "Could not start the download.");
+        button.disabled = false;
+        button.textContent = "Download";
+      });
+  }
+
+  function pollDownload(button) {
+    fetch("/api/videos/library/status")
+      .then(function (r) { return r.json(); })
+      .then(function (job) {
+        if (job.state === "downloading" || job.state === "checking") {
+          setTimeout(function () { pollDownload(button); }, 400);
+          return;
+        }
+        if (job.state === "error") {
+          showBranchError(job.error || job.message || "Download failed.");
+          button.disabled = false;
+          button.textContent = "Download";
+          return;
+        }
+        window.location.reload();
+      })
+      .catch(function () { setTimeout(function () { pollDownload(button); }, 1000); });
+  }
+
+  const watchButton = document.getElementById("watch-download");
+  if (watchButton) watchButton.addEventListener("click", function () { downloadOne(watchButton); });
+})();

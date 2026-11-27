@@ -1,0 +1,123 @@
+1
+00:00:00,500 --> 00:00:02,830
+Volts, amps and ohms.
+
+2
+00:00:03,550 --> 00:00:05,918
+Picture electricity as water in a pipe.
+
+3
+00:00:06,098 --> 00:00:08,983
+Volts are the push, like head: pressure
+from height.
+
+4
+00:00:09,163 --> 00:00:13,494
+Amps are the flow: how much charge passes
+each second, like litres per second.
+
+5
+00:00:13,674 --> 00:00:17,129
+Ohms are resistance, like a narrow pipe
+holding the flow back.
+
+6
+00:00:17,849 --> 00:00:21,838
+Ohm's law ties them together: volts equal
+amps, times ohms.
+
+7
+00:00:22,018 --> 00:00:25,507
+Put 12 volts across 6 ohms, and 2 amps
+flow.
+
+8
+00:00:25,687 --> 00:00:29,376
+More push, more flow. More resistance,
+less flow.
+
+9
+00:00:29,556 --> 00:00:35,778
+And power, from episode two, is volts
+times amps: 12 times 2 is 24 watts.
+
+10
+00:00:37,098 --> 00:00:40,635
+Now send our stream's 245 watts down a
+cable.
+
+11
+00:00:40,815 --> 00:00:43,799
+At 12 volts, that's about 20 amps.
+
+12
+00:00:43,979 --> 00:00:48,299
+At 48 volts, about 5. A quarter of the
+current.
+
+13
+00:00:48,479 --> 00:00:52,673
+And the heat a cable wastes goes with the
+current squared. A quarter of the current:
+
+14
+00:00:52,673 --> 00:00:53,871
+a sixteenth of the heat.
+
+15
+00:00:54,051 --> 00:00:59,165
+The same cable that wastes 42 W at 12
+volts, a sixth of our power,
+
+16
+00:00:59,165 --> 00:01:00,792
+wastes under 3 at 48.
+
+17
+00:01:02,712 --> 00:01:05,135
+But low voltage is not the same as safe.
+
+18
+00:01:05,315 --> 00:01:10,092
+Short a battery, and it can push a huge
+current: enough to make a spanner red hot,
+
+19
+00:01:10,092 --> 00:01:11,082
+and start a fire.
+
+20
+00:01:11,262 --> 00:01:16,399
+Take off rings and watches, use insulated
+tools, and fit a fuse at the battery.
+
+21
+00:01:16,579 --> 00:01:19,974
+And as always, a hydro generator never
+runs without a load.
+
+22
+00:01:19,974 --> 00:01:22,679
+Shut the water off before you touch the
+wiring,
+
+23
+00:01:22,679 --> 00:01:25,097
+and have a qualified electrician check it.
+
+24
+00:01:26,817 --> 00:01:30,104
+Remember: volts, times amps, gives watts.
+
+25
+00:01:30,284 --> 00:01:33,198
+For the same watts, higher volts means
+fewer amps,
+
+26
+00:01:33,198 --> 00:01:35,180
+and less heat lost in your cables.
+
+27
+00:01:35,900 --> 00:01:37,659
+Next: why your pipe eats your head.
